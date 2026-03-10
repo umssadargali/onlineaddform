@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iqra School - Professional Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary: #1a5d1a; --gold: #d4af37; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 950px; margin: auto; background: white; border-top: 10px solid var(--primary); padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .header-box { text-align: center; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px dashed #ccc; }
+        .preview-box { width: 120px; height: 140px; border: 2px solid #ddd; margin-top: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: white; }
+        .preview-box img { max-width: 100%; max-height: 100%; }
+        input, select { padding: 12px; border: 1px solid #bdc3c7; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .submit-btn { background: var(--primary); color: white; padding: 18px; border: none; border-radius: 5px; width: 100%; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 30px; }
+        .submit-btn:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <h1 style="color: var(--primary); margin:0;">IQRA PUBLIC SCHOOL</h1>
+        <p style="margin:5px;">Mathurapur, Barsoi, Katihar, Bihar - 855102</p>
+        <div style="background:var(--gold); height:2px; width:100px; margin:10px auto;"></div>
+        <h3>ONLINE ADMISSION FORM</h3>
+    </div>
+
+    <form id="admissionForm">
+        <div class="form-grid" id="fieldsContainer">
+            </div>
+
+        <div class="upload-section">
+            <div class="form-group">
+                <label><b>Student Photo (Passport Size)</b></label>
+                <input type="file" id="photoInput" accept="image/*" onchange="previewImg(this, 'photoPreview')" required>
+                <div class="preview-box" id="photoPreview">Photo</div>
+            </div>
+            <div class="form-group">
+                <label><b>Student Signature</b></label>
+                <input type="file" id="sigInput" accept="image/*" onchange="previewImg(this, 'sigPreview')" required>
+                <div class="preview-box" id="sigPreview" style="height: 60px; width: 180px;">Signature</div>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">SUBMIT & GENERATE ADMISSION CARD</button>
+    </form>
+</div>
+
+<script>
+    // 1. APNA DEPLOYED URL YAHAN DALEIN
+    const scriptURL = 'https://script.google.com/macros/s/AKfycby8tOdt0VakjRs_GDLLZFvbLnYn9whOP08stXseQIMx32DoCP3yMeZEjTgoa2DFgE6x/exec';
+
+    // 2. Headers as per your 27-28 columns requirement
+    const textFields = [
+        "Serial No. of Admission", "Date of Admission", "Name of Students", 
+        "Adhar Number", "Caste", "Bank Details", 
+        "Mother Name & Occupation", "Father Name & Occupation", 
+        "Permanent Residence", "Local Guardian", 
+        "Day", "Month", "Year", "Previous School Name", 
+        "Class in which reading", "Date of T.C", "T.C No"
+    ];
+
+    const container = document.getElementById('fieldsContainer');
+    textFields.forEach(f => {
+        container.innerHTML += `<div class="form-group"><label>${f}</label><input type="text" name="${f}" required></div>`;
+    });
+
+    let images = { photo: "", sig: "" };
+
+    function previewImg(input, previewId) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(previewId).innerHTML = `<img src="${e.target.result}">`;
+            if(previewId === 'photoPreview') images.photo = e.target.result;
+            if(previewId === 'sigPreview') images.sig = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    document.getElementById('admissionForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Sending Data to School Registry...";
+        btn.disabled = true;
+        
+        const formData = new FormData(this);
+        const dataObj = Object.fromEntries(formData.entries());
+        dataObj.photoData = images.photo;
+        dataObj.sigData = images.sig;
+
+        // --- GOOGLE SHEET SUBMISSION ---
+        try {
+            await fetch(scriptURL, {
+                method: 'POST',
+                body: JSON.stringify(dataObj),
+                mode: 'no-cors'
+            });
+
+            // --- PDF GENERATION ---
+            generateProfessionalPDF(dataObj);
+            
+            alert("Admission Successful! Data saved to Sheet and PDF Generated.");
+        } catch (error) {
+            console.error('Error!', error.message);
+            alert("Error saving data. Please try again.");
+        } finally {
+            btn.innerText = "SUBMIT & GENERATE ADMISSION CARD";
+            btn.disabled
