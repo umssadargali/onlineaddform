@@ -3,6 +3,7 @@
 <head>
     <title>Iqra Public School - Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: 'Arial', sans-serif; background: var(--bg); padding: 10px; }
@@ -18,7 +19,6 @@
         .preview img { width: 100%; height: 100%; object-fit: cover; }
         .btn-main { background: var(--p); color: white; padding: 15px; border: none; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         
-        /* Modal Style */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
         .modal-body { background: white; width: 90%; max-width: 700px; margin: 20px auto; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .pre-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -35,7 +35,7 @@
 
     <div class="search-row">
         <input type="text" id="sApp" placeholder="Search App No..." style="flex:1;">
-        <button onclick="alert('Searching...')" style="padding:5px 15px;">SEARCH</button>
+        <button onclick="searchRecord()" style="padding:5px 15px; background:#d4af37; color:white; border:none; cursor:pointer;">SEARCH</button>
     </div>
 
     <form id="admissionForm">
@@ -75,17 +75,19 @@
     let imgs = { p: "", s: "" };
 
     window.onload = async () => {
-        const res = await fetch(scriptURL);
-        const headers = await res.json();
-        const div = document.getElementById('dynamicFields');
-        let n = 3;
-        headers.forEach(h => {
-            const head = h.trim();
-            if(head && !["Photo of Students", "Signature", "Application No", "S.No"].includes(head)) {
-                div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${head.toLowerCase().includes('date')?'date':'text'}" name="${head}"></div>`;
-                n++;
-            }
-        });
+        try {
+            const res = await fetch(scriptURL);
+            const headers = await res.json();
+            const div = document.getElementById('dynamicFields');
+            let n = 3;
+            headers.forEach(h => {
+                const head = h.trim();
+                if(head && !["Photo of Students", "Signature", "Application No", "S.No"].includes(head)) {
+                    div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${head.toLowerCase().includes('date')?'date':'text'}" name="${head}"></div>`;
+                    n++;
+                }
+            });
+        } catch(e) { console.log("Header error"); }
     };
 
     function upImg(i, id) {
@@ -119,59 +121,98 @@
         }
     }
 
+    async function searchRecord() {
+        const id = document.getElementById('sApp').value;
+        if(!id) return alert("Enter App No");
+        const res = await fetch(scriptURL + "?search=" + id);
+        const r = await res.json();
+        if(r === "Not Found") alert("No Record Found"); else printAMU(r);
+    }
+
     function printAMU(data) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF('p', 'mm', 'a4');
         
-        // 1. Border
+        // 1. Page Border
         doc.rect(5, 5, 200, 287);
         
-        // 2. AMU Style Header
+        // 2. Header (AMU Style)
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(16);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 18, {align:'center'});
-        doc.setFontSize(9);
-        doc.text("Mathurapur, Barsoi, Katihar-855102 | Session 2026-27", 105, 23, {align:'center'});
-        doc.setFontSize(11);
-        doc.text("ADMISSION CARD", 105, 30, {align:'center'});
-        doc.line(85, 31, 125, 31);
-
-        // 3. Photo & App No (AMU Style)
-        if(imgs.p) doc.addImage(imgs.p, 'JPEG', 15, 40, 32, 38);
-        doc.rect(15, 40, 32, 38);
-        
+        doc.setFontSize(14);
+        doc.setTextColor(150, 0, 0); 
+        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10);
-        doc.text("Application No: " + data.AppNo, 55, 45);
-        doc.text("Status: SUBMITTED", 55, 51);
-        doc.text("Nationality: Indian", 55, 57);
+        doc.setTextColor(0);
+        doc.text("Session : 2026-27", 105, 20, {align:'center'});
+        doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        // 4. Details Table (Manual Grid to match AMU)
-        let y = 85;
-        doc.setFontSize(9);
-        const entries = Object.entries(data).filter(([k])=>!k.includes('Data'));
+        // 3. Photo (Right Side) & QR Code
+        if(imgs.p || data["Photo of Students"]) {
+            let pSrc = imgs.p || data["Photo of Students"];
+            doc.addImage(pSrc, 'JPEG', 160, 10, 35, 42); 
+            doc.rect(160, 10, 35, 42); 
+        }
+
+        // QR Code Logic
+        const qrDiv = document.createElement('div');
+        new QRCode(qrDiv, { text: data.AppNo || data["Application No"], width: 100, height: 100 });
         
-        entries.forEach((item, i) => {
-            if(y > 250) { doc.addPage(); doc.rect(5, 5, 200, 287); y = 20; }
+        setTimeout(() => {
+            const qrCanvas = qrDiv.querySelector('canvas');
+            const qrData = qrCanvas.toDataURL("image/png");
+            doc.addImage(qrData, 'PNG', 90, 35, 25, 25); 
+
+            // 4. Data Grouping
+            let y = 70;
+            const groups = [
+                { t: "Personal Details", k: ["Name of Students", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
+                { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence(Village, PO, PS and District)"] },
+                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] },
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading", "T.C No.", "Date of T.C"] }
+            ];
+
+            groups.forEach(g => {
+                doc.setFillColor(240, 240, 240);
+                doc.rect(10, y, 190, 6, 'F');
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(g.t.toUpperCase(), 12, y + 4.5);
+                y += 10;
+
+                doc.setFont("helvetica", "normal");
+                g.k.forEach(key => {
+                    let val = data[key] || "N/A";
+                    doc.setFont("helvetica", "bold");
+                    doc.text(key + ":", 12, y);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(String(val), 75, y);
+                    doc.line(10, y+1.5, 200, y+1.5);
+                    y += 8;
+                });
+                y += 5;
+            });
+
+            // 5. AMU Declaration
+            y = 255;
+            doc.setFontSize(7.5);
             doc.setFont("helvetica", "bold");
-            doc.text(item[0].toUpperCase() + ":", 15, y);
+            doc.text("DECLARATION:", 10, y);
+            const dec = "I SOLEMNLY UNDERTAKE to accept and abide by the rules of the school. I hereby affirm that the entries made by me above are true to the best of my knowledge and belief. If at any time, the entries are found incorrect, the admission may be cancelled.";
+            const splitDec = doc.splitTextToSize(dec, 185);
             doc.setFont("helvetica", "normal");
-            doc.text(String(item[1] || "N/A"), 80, y);
-            doc.line(15, y+2, 195, y+2);
-            y += 8;
-        });
+            doc.text(splitDec, 10, y + 4);
 
-        // 5. Instructions
-        y += 10;
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "italic");
-        doc.text("Declaration: I hereby declare that all information is true to my knowledge.", 15, y);
-        
-        // 6. Signature Section
-        if(imgs.s) doc.addImage(imgs.s, 'JPEG', 150, y + 5, 35, 12);
-        doc.line(150, y+18, 190, y+18);
-        doc.text("Student Signature", 158, y+22);
+            // 6. Signature Area
+            if(imgs.s || data["Signature"]) {
+                let sSrc = imgs.s || data["Signature"];
+                doc.addImage(sSrc, 'JPEG', 160, 268, 30, 10);
+            }
+            doc.line(160, 280, 195, 280);
+            doc.text("Student Signature", 165, 284);
 
-        doc.save(data.AppNo + ".pdf");
+            doc.save("Application_" + (data.AppNo || "Form") + ".pdf");
+        }, 500);
     }
 </script>
 </body>
