@@ -1,131 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Iqra Public School - Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --primary: #1a5d1a; --accent: #d4af37; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
-        .box { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; border-top: 10px solid var(--primary); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        :root { --p: #1a5d1a; --s: #f4f7f6; --a: #d4af37; }
+        body { font-family: 'Poppins', sans-serif; background: var(--s); padding: 20px; }
+        .box { max-width: 950px; margin: auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid var(--p); }
         .header { text-align: center; margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .field { display: flex; flex-direction: column; margin-bottom: 10px; }
-        label { font-size: 12px; font-weight: bold; color: #444; margin-bottom: 5px; }
-        input[type="text"] { padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
-        .uploads { display: flex; justify-content: space-around; background: #f9f9f9; padding: 20px; border: 2px dashed var(--primary); margin-top: 20px; border-radius: 8px; }
-        .btn { background: var(--primary); color: white; padding: 18px; width: 100%; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 25px; transition: 0.3s; }
-        .btn:hover { background: #0e3d0e; }
-        #loading { text-align: center; padding: 40px; font-weight: bold; color: var(--primary); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; transition: 0.3s; }
+        input:focus { border-color: var(--p); outline: none; box-shadow: 0 0 5px rgba(26,93,26,0.2); }
+        .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #fdfdfd; padding: 20px; border: 1px dashed #ccc; margin-top: 30px; border-radius: 10px; }
+        .preview { width: 120px; height: 140px; border: 2px solid #eee; margin-top: 10px; background: white; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .btn { background: var(--p); color: white; padding: 18px; border: none; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 10px; margin-top: 30px; box-shadow: 0 5px 15px rgba(26,93,26,0.3); }
+        .btn:hover { background: #134513; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div class="box">
     <div class="header">
-        <h1 style="color: var(--primary); margin: 0;">IQRA PUBLIC SCHOOL</h1>
-        <p style="color: #666; margin: 5px 0;">Mathurapur, Barsoi, Katihar-855102</p>
-        <hr style="border: 1px solid var(--accent); width: 100px;">
+        <h1 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h1>
+        <p style="color:#666;">Mathurapur, Barsoi, Katihar-855102</p>
+        <div style="background:var(--p); color:white; display:inline-block; padding:5px 20px; border-radius:20px; margin-top:10px;">ADMISSION FORM 2026-27</div>
     </div>
 
-    <div id="loading">🔄 Connecting to Google Sheet...</div>
+    <div id="loading" style="text-align:center;">🔄 Processing Secure Connection...</div>
 
     <form id="admissionForm" style="display:none;">
         <div id="dynamicFields" class="grid"></div>
 
         <div class="uploads">
             <div class="field">
-                <label>Student Photo</label>
-                <input type="file" id="photoIn" accept="image/*" onchange="preview(this, 'photoBox')" required>
-                <div id="photoBox" style="width:100px; height:120px; border:1px solid #ddd; margin-top:10px; background: #fff;"></div>
+                <label>STUDENT PHOTO (Passport Size)</label>
+                <input type="file" id="pIn" accept="image/*" onchange="pv(this, 'pP')" required>
+                <div id="pP" class="preview">Photo</div>
             </div>
             <div class="field">
-                <label>Signature</label>
-                <input type="file" id="sigIn" accept="image/*" onchange="preview(this, 'sigBox')" required>
-                <div id="sigBox" style="width:160px; height:50px; border:1px solid #ddd; margin-top:10px; background: #fff;"></div>
+                <label>STUDENT SIGNATURE</label>
+                <input type="file" id="sIn" accept="image/*" onchange="pv(this, 'sP')" required>
+                <div id="sP" class="preview" style="width:200px; height:60px;">Signature</div>
             </div>
         </div>
 
-        <button type="submit" id="subBtn" class="btn">SUBMIT & DOWNLOAD ADMISSION FORM</button>
+        <button type="submit" id="subBtn" class="btn">SUBMIT & GENERATE ADMISSION CARD</button>
     </form>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwzy7tbq7Hs3KrAB6qPenllMr_wAxhJipAc7QNgXpI1EwfFMq0s4-Pwp-SlWvR8PK6h/exec'; // Apna naya URL yahan dalein
-    let imgData = { p: "", s: "" };
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxccmP1ZI2hCrNWeIbcOmUYk7w7dJVv1JMUELrupExSW1UIq-YBb3k5O-LLg-grR_p7/exec';
+    let imgs = { p: "", s: "" };
 
-    // 1. Headers Load Karna
     window.onload = async () => {
         try {
-            const response = await fetch(scriptURL);
-            const headers = await response.json();
+            const res = await fetch(scriptURL);
+            const headers = await res.json();
             const container = document.getElementById('dynamicFields');
             
-            headers.forEach((h, i) => {
+            headers.forEach((h) => {
+                const head = h.toString().trim();
                 const skip = ["Photo of Students", "Signature", "Application No", "S.No"];
-                if(h && !skip.includes(h.toString().trim())) {
+                
+                if(head && !skip.includes(head)) {
+                    let type = "text";
+                    // Calendar logic for DOB and Admission Date
+                    if(head.toLowerCase().includes("date")) type = "date";
+
                     container.innerHTML += `
                         <div class="field">
-                            <label>Field ${i}: ${h}</label>
-                            <input type="text" name="${h}" required>
+                            <label>${head.toUpperCase()}</label>
+                            <input type="${type}" name="${head}" required>
                         </div>`;
                 }
             });
             document.getElementById('loading').style.display = 'none';
             document.getElementById('admissionForm').style.display = 'block';
-        } catch (e) {
-            document.getElementById('loading').innerHTML = "❌ <span style='color:red;'>Connection Failed!</span><br>Please check Script URL and Deployment Settings.";
-        }
+        } catch (e) { document.getElementById('loading').innerHTML = "Connection Error!"; }
     };
 
-    function preview(input, boxId) {
-        const fr = new FileReader();
-        fr.onload = (e) => {
-            document.getElementById(boxId).innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%;">`;
-            if(boxId === 'photoBox') imgData.p = e.target.result; else imgData.s = e.target.result;
+    function pv(input, id) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById(id).innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            if(id === 'pP') imgs.p = e.target.result; else imgs.s = e.target.result;
         };
-        fr.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(input.files[0]);
     }
 
     document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('subBtn');
-        btn.innerText = "Processing Please Wait..."; btn.disabled = true;
+        btn.innerText = "Uploading Data & Images..."; btn.disabled = true;
 
         const data = Object.fromEntries(new FormData(e.target));
-        data.photoData = imgData.p; data.sigData = imgData.s;
+        data.photoData = imgs.p; data.sigData = imgs.s;
 
-        try {
-            const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await res.json();
-            if(result.status === "Success") {
-                data.AppNo = result.appNo;
-                generatePDF(data);
-                alert("Admission Completed! Application No: " + result.appNo);
-            }
-        } catch (err) { alert("Data saved to sheet, but there was an issue generating PDF."); }
-        btn.innerText = "SUBMIT & DOWNLOAD ADMISSION FORM"; btn.disabled = false;
+        const response = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
+        const result = await response.json();
+        
+        if(result.status === "Success") {
+            data.AppNo = result.appNo;
+            data.PhotoUrl = result.photo;
+            makeProfessionalPDF(data);
+            alert("Success! Application No: " + result.appNo);
+        }
+        btn.disabled = false; btn.innerText = "SUBMIT & GENERATE ADMISSION CARD";
     };
 
-    function generatePDF(data) {
+    function makeProfessionalPDF(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.rect(5, 5, 200, 287); // Border
-        doc.setFontSize(22); doc.setTextColor(26, 93, 26);
+        doc.rect(5, 5, 200, 287);
+        doc.setTextColor(26, 93, 26);
+        doc.setFontSize(22);
         doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
-        doc.setFontSize(10); doc.text("Mathurapur, Barsoi, Katihar, Bihar - 855102", 105, 26, {align:'center'});
+        doc.setFontSize(10);
+        doc.text("Mathurapur, Barsoi, Katihar-855102", 105, 26, {align:'center'});
         
-        if(imgData.p) doc.addImage(imgData.p, 'JPEG', 165, 35, 30, 35);
-        doc.setFontSize(12); doc.text("Application No: " + data.AppNo, 20, 45);
+        if(imgs.p) doc.addImage(imgs.p, 'JPEG', 160, 35, 35, 40);
+        doc.setFontSize(12);
+        doc.text("Application No: " + data.AppNo, 20, 45);
+
+        const rows = Object.entries(data).filter(([k])=>!k.includes('Data') && k!=="PhotoUrl").map(([k,v])=>[k,v]);
+        doc.autoTable({ startY: 75, body: rows, theme: 'grid', headStyles: {fillColor: [26, 93, 26]} });
         
-        const rows = Object.entries(data).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k,v]);
-        doc.autoTable({ startY: 75, body: rows, theme: 'grid', styles: { fontSize: 8 } });
-        
-        const finalY = doc.lastAutoTable.finalY + 15;
-        if(imgData.s) doc.addImage(imgData.s, 'JPEG', 150, finalY, 40, 12);
-        doc.text("Student Signature", 155, finalY + 20);
-        doc.save("Iqra_Admission_" + data.AppNo + ".pdf");
+        if(imgs.s) doc.addImage(imgs.s, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 15);
+        doc.save(data.AppNo + ".pdf");
     }
 </script>
 </body>
