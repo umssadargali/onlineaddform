@@ -1,159 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Iqra Public School - Admission Portal</title>
+    <title>Iqra School - Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --primary: #1a5d1a; --gold: #d4af37; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 950px; margin: auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-top: 10px solid var(--primary); }
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333; }
-        input[type="text"] { padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fafafa; }
-        .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f9f9f9; padding: 20px; border: 1px dashed #2e7d32; margin-top: 20px; }
-        .agreement { grid-column: span 2; margin-top: 20px; padding: 10px; border-top: 1px solid #eee; }
-        .search-box { background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 30px; display: flex; gap: 10px; align-items: center; }
-        button { background: var(--primary); color: white; padding: 15px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        #loader { text-align: center; color: var(--primary); font-weight: bold; }
+        :root { --p: #1a5d1a; --g: #d4af37; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 15px; }
+        .box { max-width: 850px; margin: auto; background: white; padding: 25px; border-radius: 8px; border-top: 8px solid var(--p); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #555; }
+        input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .upload { display: flex; justify-content: space-around; background: #f9f9f9; padding: 15px; margin-top: 15px; border: 1px dashed var(--p); }
+        .btn { background: var(--p); color: white; padding: 15px; width: 100%; border: none; font-size: 16px; cursor: pointer; margin-top: 20px; border-radius: 4px; }
+        .search-area { display: flex; gap: 10px; margin-bottom: 20px; background: #e8f5e9; padding: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
     <div style="text-align:center;">
-        <h1 style="color:var(--primary); margin:0;">IQRA PUBLIC SCHOOL</h1>
-        <p>Mathurapur, Barsoi, Katihar, Bihar - 855102</p>
-        <hr style="border: 1px solid var(--gold); width: 100px;">
+        <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
+        <p style="margin:5px;">Mathurapur, Barsoi, Katihar-855102</p>
     </div>
 
-    <div class="search-box">
-        <input type="text" id="searchApp" placeholder="Enter Application No. to Download" style="flex:1; padding:10px;">
-        <button onclick="searchForm()" style="padding:10px 20px; background: var(--gold);">SEARCH</button>
+    <div class="search-area">
+        <input type="text" id="sInput" placeholder="Enter App No to Search" style="flex:1; padding:8px;">
+        <button onclick="doSearch()" style="background:var(--g); border:none; padding:8px 15px; cursor:pointer;">SEARCH</button>
     </div>
 
-    <div id="loader">🔄 System is fetching latest columns from Google Sheet...</div>
+    <div id="loading">🔄 Loading fields from Sheet...</div>
 
-    <form id="admissionForm" style="display:none;">
-        <div id="dynamicFields" class="form-grid"></div>
-
-        <div class="upload-section">
-            <div>
-                <label>Student Passport Photo</label>
-                <input type="file" id="pIn" accept="image/*" required onchange="preview(this, 'pPrev')">
-                <div id="pPrev" style="width:100px; height:120px; border:1px solid #ddd; margin-top:5px; background:white;"></div>
+    <form id="mainForm" style="display:none;">
+        <div id="fields" class="grid"></div>
+        <div class="upload">
+            <div class="field">
+                <label>Student Photo</label>
+                <input type="file" id="p" accept="image/*" onchange="read(this, 'pP')" required>
+                <div id="pP" style="width:80px; height:100px; border:1px solid #ddd; margin-top:5px;"></div>
             </div>
-            <div>
-                <label>Student Signature</label>
-                <input type="file" id="sIn" accept="image/*" required onchange="preview(this, 'sPrev')">
-                <div id="sPrev" style="width:150px; height:50px; border:1px solid #ddd; margin-top:5px; background:white;"></div>
+            <div class="field">
+                <label>Signature</label>
+                <input type="file" id="s" accept="image/*" onchange="read(this, 'sP')" required>
+                <div id="sP" style="width:120px; height:40px; border:1px solid #ddd; margin-top:5px;"></div>
             </div>
         </div>
-
-        <div class="agreement">
-            <input type="checkbox" id="agree" required>
-            <label for="agree" style="display:inline;"> I hereby declare that all information provided is true to the best of my knowledge.</label>
-        </div>
-
-        <button type="submit" id="subBtn" style="width:100%; font-size: 20px; margin-top:20px;">SUBMIT & GENERATE ADMISSION CARD</button>
+        <button type="submit" id="b" class="btn">SUBMIT & PRINT</button>
     </form>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxnMpRAZTkR6IABqToJNz8ZQxZ9vIK1IKcK0rKtT9v0LXyBdpSzCPo3CIuzRy0_z4GR/exec'; 
-    let images = { photo: "", sig: "" };
+    const url = 'https://script.google.com/macros/s/AKfycbx7FpOoCs4qU3dG3yuPNyFtI7wYzDotajIlGVOi5GcRwjdg0GIYqtNvj25KqhEkZ_OW/exec'; 
+    let imgs = { p: "", s: "" };
 
     window.onload = async () => {
         try {
-            const res = await fetch(scriptURL);
-            const headers = await res.json();
-            const container = document.getElementById('dynamicFields');
-            
-            headers.forEach((h) => {
-                const skip = ["Photo of Students", "Signature", "Application No"];
-                if(!skip.includes(h.name) && h.name.trim() !== "") {
-                    container.innerHTML += `
-                        <div class="form-group">
-                            <label>Cell ${h.index}: ${h.name}</label>
-                            <input type="text" name="${h.name}" required>
-                        </div>`;
+            const r = await fetch(url);
+            const h = await r.json();
+            const f = document.getElementById('fields');
+            h.forEach((name, i) => {
+                const ignore = ["Photo of Students", "Signature", "Application No"];
+                if(name && !ignore.includes(name.trim())) {
+                    f.innerHTML += `<div class="field"><label>Cell ${i}: ${name}</label><input type="text" name="${name}" required></div>`;
                 }
             });
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('admissionForm').style.display = 'block';
-        } catch (e) { document.getElementById('loader').innerText = "Error loading fields!"; }
+            document.getElementById('loading').style.display='none';
+            document.getElementById('mainForm').style.display='block';
+        } catch(e) { alert("Error connecting to Sheet!"); }
     };
 
-    function preview(input, id) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
+    function read(input, id) {
+        const fr = new FileReader();
+        fr.onload = (e) => {
             document.getElementById(id).innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%;">`;
-            if(id === 'pPrev') images.photo = e.target.result;
-            if(id === 'sPrev') images.sig = e.target.result;
+            if(id === 'pP') imgs.p = e.target.result; else imgs.s = e.target.result;
         };
-        reader.readAsDataURL(input.files[0]);
+        fr.readAsDataURL(input.files[0]);
     }
 
-    document.getElementById('admissionForm').onsubmit = async (e) => {
+    document.getElementById('mainForm').onsubmit = async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('subBtn');
-        btn.innerText = "Generating Professional Form...";
-        btn.disabled = true;
+        const b = document.getElementById('b');
+        b.innerText = "Processing..."; b.disabled = true;
+        const d = Object.fromEntries(new FormData(e.target));
+        d.photoData = imgs.p; d.sigData = imgs.s;
 
-        const data = Object.fromEntries(new FormData(e.target));
-        data.photoData = images.photo;
-        data.sigData = images.sig;
-
-        const response = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-        const result = await response.json();
-        
-        if(result.status === "Success") {
-            data.AppNo = result.appNo;
-            generateProfessionalPDF(data);
-            alert("Success! App No: " + result.appNo);
+        const res = await fetch(url, { method: 'POST', body: JSON.stringify(d) });
+        const resJ = await res.json();
+        if(resJ.status === "Success") {
+            d.AppNo = resJ.appNo;
+            makePDF(d);
+            alert("Success! App No: " + d.appNo);
         }
-        btn.disabled = false;
-        btn.innerText = "SUBMIT & GENERATE ADMISSION CARD";
+        b.innerText = "SUBMIT & PRINT"; b.disabled = false;
     };
 
-    function generateProfessionalPDF(data) {
+    function makePDF(d) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-        // Header Style (Screenshot 2 jaisa)
         doc.rect(5, 5, 200, 287);
-        doc.setFontSize(20);
-        doc.setTextColor(26, 93, 26);
         doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
-        doc.setFontSize(10);
-        doc.text("Mathurapur, Barsoi, Katihar-855102", 105, 26, {align:'center'});
-        
-        doc.setFontSize(14);
-        doc.text("APPLICATION FORM FOR ADMISSION (2026-27)", 105, 40, {align:'center'});
-        doc.text("App No: " + (data.AppNo || "Pending"), 20, 50);
-
-        if(images.photo) doc.addImage(images.photo, 'JPEG', 160, 35, 35, 40);
-
-        const tableData = Object.entries(data).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k,v]);
-        doc.autoTable({
-            startY: 80,
-            body: tableData,
-            theme: 'grid',
-            styles: { fontSize: 9, cellPadding: 2 },
-            columnStyles: { 0: { fontStyle: 'bold', width: 60 } }
-        });
-
-        const finalY = doc.lastAutoTable.finalY + 20;
-        doc.text("Declaration: I accept all terms.", 20, finalY);
-        if(images.sig) doc.addImage(images.sig, 'JPEG', 150, finalY - 10, 40, 15);
-        doc.text("Student Signature", 155, finalY + 15);
-
-        doc.save("Iqra_Admission_" + data.AppNo + ".pdf");
+        if(imgs.p) doc.addImage(imgs.p, 'JPEG', 160, 10, 35, 40);
+        const rows = Object.entries(d).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k,v]);
+        doc.autoTable({ startY: 55, body: rows });
+        if(imgs.s) doc.addImage(imgs.s, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 15);
+        doc.save("Admission_" + d.AppNo + ".pdf");
     }
 
-    function searchForm() {
-        alert("Search feature connected to Application ID. Please use the generate button for real-time PDF.");
+    async function doSearch() {
+        const val = document.getElementById('sInput').value;
+        const r = await fetch(url + "?search=" + val);
+        const res = await r.json();
+        if(res === "Not Found") alert("No Record Found!"); else alert("Record Found: " + res[3]);
     }
 </script>
 </body>
