@@ -1,118 +1,126 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Iqra School - Admission Portal</title>
+    <title>Iqra School - 100% Dynamic Portal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --primary: #1a5d1a; --gold: #d4af37; }
+        :root { --primary: #1a5d1a; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 950px; margin: auto; background: white; border-top: 10px solid var(--primary); padding: 30px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .header-box { text-align: center; margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px dashed #ccc; }
-        .preview-box { width: 100px; height: 120px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background: white; overflow: hidden; }
-        .preview-box img { max-width: 100%; max-height: 100%; }
-        label { font-size: 13px; font-weight: bold; color: #333; }
-        input { padding: 10px; border: 1px solid #bdc3c7; border-radius: 4px; width: 100%; box-sizing: border-box; margin-top: 5px; }
-        .submit-btn { background: var(--primary); color: white; padding: 15px; border: none; border-radius: 5px; width: 100%; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; border-top: 8px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #444; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .upload-box { border: 1px dashed #2e7d32; padding: 15px; margin-top: 20px; text-align: center; background: #f0fdf0; }
+        #loader { text-align: center; font-size: 18px; color: var(--primary); padding: 50px; }
+        button { background: var(--primary); color: white; padding: 15px; border: none; cursor: pointer; width: 100%; font-size: 18px; margin-top: 20px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-box">
-        <h1 style="color: var(--primary); margin:0;">IQRA PUBLIC SCHOOL</h1>
-        <p>Mathurapur, Barsoi, Katihar, Bihar - 855102</p>
-        <h3>ONLINE ADMISSION FORM (2026-27)</h3>
-    </div>
+    <h2 style="text-align:center; color:var(--primary);">IQRA PUBLIC SCHOOL - ADMISSION</h2>
+    <div id="loader">🔄 Google Sheet se dynamic fields load ho rahi hain...</div>
 
-    <form id="admissionForm">
-        <div class="form-grid" id="fieldsContainer">
-            </div>
+    <form id="admissionForm" style="display:none;">
+        <div id="dynamicFields" class="form-grid"></div>
 
-        <div class="upload-section">
-            <div class="form-group">
-                <label>Student Photo</label>
-                <input type="file" id="pIn" accept="image/*" onchange="preview(this, 'pPrev', 'photo')" required>
-                <div id="pPrev" class="preview-box">Photo</div>
-            </div>
-            <div class="form-group">
-                <label>Signature</label>
-                <input type="file" id="sIn" accept="image/*" onchange="preview(this, 'sPrev', 'sig')" required>
-                <div id="sPrev" class="preview-box" style="height: 60px; width: 180px;">Signature</div>
-            </div>
+        <div class="upload-box">
+            <label><b>Student Photo</b></label>
+            <input type="file" id="pIn" accept="image/*" required>
+            <br><br>
+            <label><b>Student Signature</b></label>
+            <input type="file" id="sIn" accept="image/*" required>
         </div>
 
-        <button type="submit" class="submit-btn" id="subBtn">SUBMIT & DOWNLOAD ADMISSION CARD</button>
+        <button type="submit" id="subBtn">SUBMIT & DOWNLOAD PDF</button>
     </form>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycby8tOdt0VakjRs_GDLLZFvbLnYn9whOP08stXseQIMx32DoCP3yMeZEjTgoa2DFgE6x/exec'; // <-- APNA URL YAHAN DALEIN
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxKGleKbHpIgKqlgp6BUWSTG4muc5Rz81t8kdMaQF6ERwMYCC97S7ebwbQo1qI_67m8/exec'; // Apna URL yahan dalein
+    let photoBase64 = "", sigBase64 = "";
 
-    // Sheet ke headers ke exact naam yahan likhein
-    const fields = [
-        "Serial No. of Admission", "Date of Admission", "Name of Students", "Adhar Number", "Caste", "Bank Details",
-        "Name & Address of Mother with Occupation", "Name & Address of Father with Occupation",
-        "Permanent Residence", "Local Guardian Name & Mobile", "Day", "Month", "Year",
-        "Name & Place of School", "Class in which reading", "Date of T.C", "T.C No"
-    ];
+    // 1. Dynamic Headers Fetching
+    window.onload = async () => {
+        try {
+            const res = await fetch(scriptURL);
+            const headers = await res.json();
+            const container = document.getElementById('dynamicFields');
+            
+            headers.forEach((headerObj) => {
+                const hName = headerObj.name;
+                // Photo, Signature aur S.No ko skip karein taaki duplicate na ho
+                if(hName !== "Photo of Students" && hName !== "Signature" && hName.trim() !== "") {
+                    container.innerHTML += `
+                        <div class="form-group">
+                            <label>Field ${headerObj.index}: ${hName}</label>
+                            <input type="text" name="${hName}" placeholder="Enter ${hName}" required>
+                        </div>`;
+                }
+            });
 
-    const container = document.getElementById('fieldsContainer');
-    fields.forEach(f => {
-        container.innerHTML += `<div class="form-group"><label>${f}</label><input type="text" name="${f}" required></div>`;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('admissionForm').style.display = 'block';
+        } catch (e) {
+            document.getElementById('loader').innerText = "Error: Sheet headers nahi mil paaye. Script URL check karein.";
+        }
+    };
+
+    // 2. Base64 Converter for Images
+    const toBase64 = file => new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => res(reader.result);
+        reader.onerror = error => rej(error);
     });
 
-    let images = { photo: "", sig: "" };
-
-    function preview(input, prevId, key) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById(prevId).innerHTML = `<img src="${e.target.result}">`;
-            images[key] = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-
+    // 3. Form Submission
     document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('subBtn');
-        btn.innerText = "Processing... Please Wait";
+        btn.innerText = "Processing...";
         btn.disabled = true;
 
-        const data = Object.fromEntries(new FormData(e.target));
-        data.photoData = images.photo;
-        data.sigData = images.sig;
+        const pFile = document.getElementById('pIn').files[0];
+        const sFile = document.getElementById('sIn').files[0];
+        if(pFile) photoBase64 = await toBase64(pFile);
+        if(sFile) sigBase64 = await toBase64(sFile);
+
+        const formData = new FormData(e.target);
+        const dataObj = Object.fromEntries(formData.entries());
+        dataObj.photoData = photoBase64;
+        dataObj.sigData = sigBase64;
 
         try {
-            // Data Sheet mein bhej rahe hain
-            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' });
+            // Send to Sheet
+            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(dataObj), mode: 'no-cors' });
             
-            // PDF Download
-            generatePDF(data);
-            alert("Admission Done Successfully!");
+            // Generate PDF
+            generatePDF(dataObj);
+            alert("Admission Complete! PDF Downloaded.");
         } catch (err) {
-            alert("Error: Data saved but PDF failed or vice-versa.");
+            alert("Submission error!");
         }
-        
-        btn.innerText = "SUBMIT & GENERATE ADMISSION CARD";
+
+        btn.innerText = "SUBMIT & DOWNLOAD PDF";
         btn.disabled = false;
     };
 
     function generatePDF(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.rect(5, 5, 200, 287);
-        doc.setFontSize(22);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align: 'center'});
-        if(images.photo) doc.addImage(images.photo, 'JPEG', 160, 10, 35, 40);
+        doc.setFontSize(20);
+        doc.text("IQRA PUBLIC SCHOOL", 105, 15, {align: 'center'});
         
-        const rows = Object.entries(data).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k,v]);
-        doc.autoTable({ startY: 55, body: rows, margin: {right: 55}, styles: {fontSize: 8} });
+        if(photoBase64) doc.addImage(photoBase64, 'JPEG', 160, 10, 35, 40);
+
+        const tableBody = Object.entries(data).filter(([k]) => !k.includes('Data')).map(([k,v]) => [k, v]);
+        doc.autoTable({ startY: 50, body: tableBody, margin: {right: 55} });
         
-        if(images.sig) doc.addImage(images.sig, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 12);
-        doc.save("Admission_Form.pdf");
+        if(sigBase64) doc.addImage(sigBase64, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 15);
+        doc.save("Admission.pdf");
     }
 </script>
 </body>
