@@ -2,202 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IQRA Public School - Admission Portal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --primary: #1a5d1a; --border-color: #333; }
-        body { font-family: Arial, sans-serif; background: #eef2f3; padding: 10px; margin: 0; }
-        .form-container { max-width: 900px; margin: 20px auto; background: white; padding: 40px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+        :root { --p: #1a5d1a; --border: #333; }
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 30px; border: 1px solid #ccc; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        /* Header AMU Style */
-        .amu-header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
-        .school-name { font-size: 26px; font-weight: bold; color: var(--primary); margin: 0; }
+        /* Header Style */
+        .header { text-align: center; border-bottom: 2px solid var(--p); margin-bottom: 20px; padding-bottom: 10px; }
+        .search-section { display: flex; gap: 10px; background: #f9f9f9; padding: 15px; margin-bottom: 20px; border: 1px solid #ddd; }
         
-        .grid-system { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .field-box { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; }
-        input { width: 100%; padding: 10px; border: 1px solid #aaa; border-radius: 3px; box-sizing: border-box; font-size: 14px; }
-        input:focus { border-color: var(--primary); outline: none; background: #f9fff9; }
+        /* AMU Grid Layout */
+        .amu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; border: 1px solid #ccc; padding: 20px; position: relative; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 3px; }
+        input { padding: 8px; border: 1px solid #999; border-radius: 2px; font-size: 13px; }
+        
+        .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; border: 1px dashed #aaa; padding: 15px; }
+        .preview-box { width: 110px; height: 130px; border: 1px solid #444; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .preview-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Upload Section */
-        .upload-section { display: flex; justify-content: space-between; background: #fcfcfc; padding: 20px; border: 1px dashed #888; margin: 20px 0; }
-        .preview-div { width: 120px; height: 150px; border: 1px solid #666; display: flex; align-items: center; justify-content: center; background: #eee; font-size: 10px; overflow: hidden; }
-        .preview-div img { width: 100%; height: 100%; object-fit: cover; }
+        /* Modal Preview */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; width: 90%; max-width: 800px; margin: 20px auto; padding: 20px; border-radius: 5px; }
 
-        /* Instructions Section */
-        .instructions { background: #fffde7; border: 1px solid #fbc02d; padding: 15px; margin-top: 30px; font-size: 12px; line-height: 1.6; }
-        .instructions h4 { margin-top: 0; color: #d32f2f; }
-
-        .submit-bar { position: sticky; bottom: 0; background: white; padding: 15px 0; text-align: center; border-top: 1px solid #ddd; margin-top: 30px; }
-        .btn-submit { background: var(--primary); color: white; border: none; padding: 15px 40px; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 4px; width: 100%; transition: 0.3s; }
-        .btn-submit:hover { background: #134513; }
-        #loader { text-align: center; font-weight: bold; color: var(--primary); padding: 50px; }
+        .btn { padding: 12px 25px; cursor: pointer; border: none; font-weight: bold; border-radius: 4px; }
+        .btn-green { background: var(--p); color: white; width: 100%; margin-top: 15px; }
+        .btn-gold { background: #d4af37; color: #000; }
+        .instruction-box { font-size: 12px; color: #d32f2f; border: 1px solid #fbc02d; background: #fffde7; padding: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <div class="amu-header">
-        <p style="margin:0; font-weight: bold;">Session : 2026-27</p>
-        <h1 class="school-name">IQRA PUBLIC SCHOOL</h1>
-        <p style="margin:5px 0; font-size: 13px;">Mathurapur, Barsoi, Katihar, Bihar - 855102</p>
-        <h3 style="margin:10px 0; background: #eee; padding: 5px; display: inline-block;">ONLINE APPLICATION FORM</h3>
+<div class="container">
+    <div class="header">
+        <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
+        <p style="margin:5px;">Mathurapur, Barsoi, Katihar-855102 | Admission 2026-27</p>
     </div>
 
-    <div id="loader">🔄 Form Structure Loading... Please wait</div>
+    <div class="search-section">
+        <input type="text" id="searchInput" placeholder="Enter App No to Download Result" style="flex:1;">
+        <button class="btn btn-gold" onclick="searchData()">SEARCH</button>
+    </div>
 
-    <form id="mainForm" style="display:none;">
-        <div id="formFields" class="grid-system"></div>
+    <form id="regForm">
+        <div id="loader">🔄 Loading Form Fields...</div>
+        
+        <div id="fieldsContainer" class="amu-grid" style="display:none;">
+            </div>
 
-        <div class="upload-section">
+        <div class="upload-row">
             <div>
-                <label>1. Upload Student Photo (Passport Size)</label>
-                <input type="file" accept="image/*" onchange="preview(this, 'p-view')" required>
-                <div id="p-view" class="preview-div" style="margin-top:10px;">PHOTO</div>
+                <label>1. STUDENT PHOTO</label>
+                <input type="file" accept="image/*" onchange="readImg(this, 'pImg')">
+                <div id="pImg" class="preview-box" style="margin-top:5px;">PHOTO</div>
             </div>
             <div>
-                <label>2. Upload Student Signature</label>
-                <input type="file" accept="image/*" onchange="preview(this, 's-view')" required>
-                <div id="s-view" class="preview-div" style="margin-top:10px; height: 60px; width: 200px;">SIGNATURE</div>
+                <label>2. SIGNATURE</label>
+                <input type="file" accept="image/*" onchange="readImg(this, 'sImg')">
+                <div id="sImg" class="preview-box" style="margin-top:5px; height:50px; width:180px;">SIGNATURE</div>
             </div>
         </div>
 
-        <div class="instructions">
-            <h4>⚠️ Important Instructions:</h4>
-            <ul>
-                <li>Form submit karne ke baad PDF download karna na bhulein.</li>
-                <li>Ek baar submit hone ke baad data change nahi kiya ja sakta.</li>
-                <li>I hereby declare that all the information provided above is true to the best of my knowledge.</li>
-                <li>Any false information may lead to the cancellation of the admission.</li>
-            </ul>
-        </div>
-
-        <div class="submit-bar">
-            <button type="submit" id="subBtn" class="btn-submit">SUBMIT & GENERATE ADMISSION CARD</button>
-        </div>
+        <button type="button" class="btn btn-green" onclick="showPreview()">PREVIEW & SUBMIT</button>
     </form>
 </div>
 
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <h3 style="text-align:center; color:var(--p);">APPLICATION PREVIEW</h3>
+        <hr>
+        <div id="previewData" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px;"></div>
+        <div class="instruction-box">
+            * Check all details carefully. Once submitted, you can download the final PDF.
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn" style="background:#888; color:white; flex:1;" onclick="closeModal()">EDIT DATA</button>
+            <button class="btn btn-green" id="finalSubBtn" style="flex:2;" onclick="finalSubmit()">CONFIRM & PRINT PDF</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxqfYLSn70aFyPW7CtH0uXe5VSawo3Karj-n0ayXQOsTKq88YEuzTvklJOl5Poj5Kqx/exec'; // Apna Script URL yahan paste karein
-    let files = { photo: "", sig: "" };
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxqfYLSn70aFyPW7CtH0uXe5VSawo3Karj-n0ayXQOsTKq88YEuzTvklJOl5Poj5Kqx/exec';
+    let imgStore = { p: "", s: "" };
+    let globalHeaders = [];
 
+    // Load Fields
     window.onload = async () => {
-        try {
-            const res = await fetch(scriptURL);
-            const headers = await res.json();
-            const container = document.getElementById('formFields');
-            let count = 3; // 1 aur 2 photo/sig ke liye hain
+        const res = await fetch(scriptURL);
+        globalHeaders = await res.json();
+        const container = document.getElementById('fieldsContainer');
+        let counter = 3;
 
-            headers.forEach((h) => {
-                const head = h.toString().trim();
-                const skip = ["Photo of Students", "Signature", "Application No", "S.No"];
-                if(head && !skip.includes(head)) {
-                    let type = head.toLowerCase().includes("date") ? "date" : "text";
-                    container.innerHTML += `
-                        <div class="field-box">
-                            <label>${count}. ${head}</label>
-                            <input type="${type}" name="${head}" placeholder="Enter ${head}" required>
-                        </div>`;
-                    count++;
-                }
-            });
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('mainForm').style.display = 'block';
-        } catch (e) { alert("Error connecting to sheet!"); }
+        globalHeaders.forEach(h => {
+            const head = h.trim();
+            const skip = ["Photo of Students", "Signature", "Application No", "S.No"];
+            if(head && !skip.includes(head)) {
+                let type = head.toLowerCase().includes("date") ? "date" : "text";
+                container.innerHTML += `
+                    <div class="field">
+                        <label>${counter}. ${head}</label>
+                        <input type="${type}" name="${head}">
+                    </div>`;
+                counter++;
+            }
+        });
+        document.getElementById('loader').style.display = 'none';
+        container.style.display = 'grid';
     };
 
-    function preview(input, id) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
+    function readImg(input, id) {
+        const fr = new FileReader();
+        fr.onload = (e) => {
             document.getElementById(id).innerHTML = `<img src="${e.target.result}">`;
-            if(id === 'p-view') files.photo = e.target.result; else files.sig = e.target.result;
+            if(id === 'pImg') imgStore.p = e.target.result; else imgStore.s = e.target.result;
         };
-        reader.readAsDataURL(input.files[0]);
+        fr.readAsDataURL(input.files[0]);
     }
 
-    document.getElementById('mainForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('subBtn');
-        btn.innerText = "Processing... Data Saving"; btn.disabled = true;
+    function showPreview() {
+        const form = document.getElementById('regForm');
+        const data = Object.fromEntries(new FormData(form));
+        let html = "";
+        for (let [key, value] of Object.entries(data)) {
+            html += `<div><strong>${key}:</strong> ${value || 'N/A'}</div>`;
+        }
+        document.getElementById('previewData').innerHTML = html;
+        document.getElementById('previewModal').style.display = 'block';
+    }
 
-        const data = Object.fromEntries(new FormData(e.target));
-        data.photoData = files.photo;
-        data.sigData = files.sig;
+    function closeModal() { document.getElementById('previewModal').style.display = 'none'; }
 
-        try {
-            const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await res.json();
-            if(result.status === "Success") {
-                data.AppNo = result.appNo;
-                generateAMUPDF(data);
-                alert("Admission Form Submitted Successfully!\nApp No: " + result.appNo);
-            }
-        } catch (err) { alert("Server Error! Data not saved."); }
-        btn.innerText = "SUBMIT & GENERATE ADMISSION CARD"; btn.disabled = false;
-    };
+    async function finalSubmit() {
+        const btn = document.getElementById('finalSubBtn');
+        btn.innerText = "Submitting..."; btn.disabled = true;
+        
+        const data = Object.fromEntries(new FormData(document.getElementById('regForm')));
+        data.photoData = imgStore.p;
+        data.sigData = imgStore.s;
 
-    function generateAMUPDF(data) {
+        const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
+        const result = await res.json();
+        
+        if(result.status === "Success") {
+            data.AppNo = result.appNo;
+            generatePDF(data);
+            alert("Application Submitted! No: " + result.appNo);
+            location.reload();
+        }
+    }
+
+    function generatePDF(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Main Border
-        doc.setLineWidth(0.5);
         doc.rect(5, 5, 200, 287);
-
-        // Header Section
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(18);
-        doc.setTextColor(26, 93, 26);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align: 'center'});
+        doc.setFontSize(20); doc.setTextColor(26, 93, 26);
+        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
+        if(imgStore.p) doc.addImage(imgStore.p, 'JPEG', 160, 30, 35, 40);
+        doc.setFontSize(10); doc.setTextColor(0);
+        doc.text("Application No: " + data.AppNo, 15, 35);
         
-        doc.setFontSize(10);
-        doc.setTextColor(0);
-        doc.text("Mathurapur, Barsoi, Katihar, Bihar - 855102", 105, 26, {align: 'center'});
-        doc.text("Online Application Form for Admission 2026-27", 105, 32, {align: 'center'});
+        const rows = Object.entries(data).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k.toUpperCase(), v || "N/A"]);
+        doc.autoTable({ startY: 75, body: rows, theme: 'grid' });
         
-        // Photo Box
-        if(files.photo) {
-            doc.addImage(files.photo, 'JPEG', 15, 40, 35, 45);
-        }
-        doc.rect(15, 40, 35, 45); // Photo Border
+        if(imgStore.s) doc.addImage(imgStore.s, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 15);
+        doc.save(data.AppNo + ".pdf");
+    }
 
-        // Application No
-        doc.setFontSize(12);
-        doc.text("Application No: " + data.AppNo, 60, 45);
-        doc.text("Status: SUBMITTED", 60, 52);
-
-        // Data Table
-        const tableData = Object.entries(data)
-            .filter(([k]) => !k.includes('Data'))
-            .map(([k, v]) => [k.toUpperCase(), v]);
-
-        doc.autoTable({
-            startY: 95,
-            body: tableData,
-            theme: 'grid',
-            styles: { fontSize: 9, cellPadding: 3 },
-            columnStyles: { 0: { fontStyle: 'bold', width: 60 } }
-        });
-
-        // Instructions in PDF
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
-        doc.text("Declaration:", 15, finalY);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text("I hereby declare that all the information provided above is true. I will abide by the rules of the school.", 15, finalY + 5);
-
-        // Signature Section
-        if(files.sig) {
-            doc.addImage(files.sig, 'JPEG', 150, finalY + 10, 40, 15);
-        }
-        doc.line(150, finalY + 26, 190, finalY + 26);
-        doc.text("Student Signature", 160, finalY + 30);
-
-        doc.save(data.AppNo + "_Iqra_Admission.pdf");
+    async function searchData() {
+        const id = document.getElementById('searchInput').value;
+        const res = await fetch(scriptURL + "?search=" + id);
+        const result = await res.json();
+        if(result === "Not Found") alert("Record not found!");
+        else alert("Record Found for: " + result[3]); // Adjust index as per sheet
     }
 </script>
 </body>
