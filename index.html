@@ -3,34 +3,26 @@
 <head>
     <title>Iqra Public School - Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --p: #1a5d1a; --s: #f4f7f6; }
-        body { font-family: 'Poppins', sans-serif; background: var(--s); padding: 15px; }
-        .box { max-width: 950px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-top: 8px solid var(--p); }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        
-        /* Search Bar Style */
-        .search-container { display: flex; gap: 5px; margin-bottom: 20px; }
-        .search-container input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn-search { background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        :root { --p: #1a5d1a; --bg: #f4f7f6; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); padding: 10px; }
+        .box { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-top: 5px solid var(--p); }
+        .header { text-align: center; border-bottom: 2px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; }
+        .search-row { display: flex; gap: 10px; margin-bottom: 20px; background: #eee; padding: 10px; border-radius: 4px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .field { display: flex; flex-direction: column; }
-        label { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 5px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
-        
-        .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fafafa; padding: 15px; border: 1px dashed #bbb; margin-top: 20px; border-radius: 8px; }
-        .preview { width: 110px; height: 130px; border: 1px solid #ddd; margin-top: 8px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #444; }
+        input { padding: 8px; border: 1px solid #bbb; border-radius: 3px; }
+        .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; padding: 15px; border: 1px dashed #888; }
+        .preview { width: 100px; height: 120px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; background: #f9f9f9; overflow: hidden; }
         .preview img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-main { background: var(--p); color: white; padding: 15px; border: none; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         
-        .btn-main { background: var(--p); color: white; padding: 15px; border: none; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 20px; }
-        
-        /* Preview Modal */
-        #previewOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; }
-        .preview-content { background: white; width: 90%; max-width: 700px; margin: 30px auto; padding: 25px; border-radius: 8px; }
-        .preview-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .preview-table td { padding: 8px; border: 1px solid #eee; font-size: 13px; }
+        /* Modal Style */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal-body { background: white; width: 90%; max-width: 700px; margin: 20px auto; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .pre-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pre-table td { border: 1px solid #ddd; padding: 6px; }
     </style>
 </head>
 <body>
@@ -38,137 +30,148 @@
 <div class="box">
     <div class="header">
         <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
-        <p style="font-size:12px; color:#666;">Mathurapur, Barsoi, Katihar-855102</p>
+        <p style="margin:5px 0; font-size: 12px;">Mathurapur, Barsoi, Katihar-855102 | Session 2026-27</p>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="searchApp" placeholder="Enter Application Number to Search...">
-        <button class="btn-search" onclick="searchRecord()">SEARCH</button>
+    <div class="search-row">
+        <input type="text" id="sApp" placeholder="Search App No..." style="flex:1;">
+        <button onclick="alert('Searching...')" style="padding:5px 15px;">SEARCH</button>
     </div>
 
-    <div id="loader" style="text-align:center;">🔄 Loading form fields...</div>
-
-    <form id="admissionForm" style="display:none;">
+    <form id="admissionForm">
         <div id="dynamicFields" class="grid"></div>
-
         <div class="uploads">
             <div class="field">
-                <label>Upload Student Photo</label>
-                <input type="file" accept="image/*" onchange="handleFile(this, 'pPreview')">
-                <div id="pPreview" class="preview">Photo</div>
+                <label>1. Student Photo</label>
+                <input type="file" accept="image/*" onchange="upImg(this, 'p-pre')">
+                <div id="p-pre" class="preview" style="margin-top:5px;">PHOTO</div>
             </div>
             <div class="field">
-                <label>Upload Signature</label>
-                <input type="file" accept="image/*" onchange="handleFile(this, 'sPreview')">
-                <div id="sPreview" class="preview" style="width:180px; height:50px;">Signature</div>
+                <label>2. Signature</label>
+                <input type="file" accept="image/*" onchange="upImg(this, 's-pre')">
+                <div id="s-pre" class="preview" style="margin-top:5px; width:180px; height:50px;">SIGNATURE</div>
             </div>
         </div>
-
-        <button type="button" class="btn-main" onclick="openPreview()">PREVIEW & PROCEED</button>
+        <button type="button" class="btn-main" onclick="openPre()">PREVIEW & SUBMIT</button>
     </form>
 </div>
 
-<div id="previewOverlay">
-    <div class="preview-content">
-        <h3 style="text-align:center; color:var(--p);">PLEASE REVIEW YOUR DATA</h3>
-        <table id="tableData" class="preview-table"></table>
+<div id="modal">
+    <div class="modal-body">
+        <h3 style="text-align:center; border-bottom:1px solid #333;">FORM PREVIEW</h3>
+        <div id="preContent"></div>
+        <div style="background:#fff3cd; padding:10px; font-size:11px; margin-top:10px;">
+            <b>Instruction:</b> Check all details. Once submitted, admission card will be generated.
+        </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button onclick="closePreview()" style="flex:1; padding:12px; border:1px solid #ccc; cursor:pointer;">Edit Again</button>
-            <button id="finalSub" onclick="submitFinal()" style="flex:2; padding:12px; background:var(--p); color:white; border:none; cursor:pointer; font-weight:bold;">Final Submit & Print PDF</button>
+            <button onclick="document.getElementById('modal').style.display='none'" style="flex:1; padding:10px;">Edit</button>
+            <button id="fBtn" onclick="sendData()" style="flex:2; padding:10px; background:var(--p); color:white; border:none; cursor:pointer;">FINAL SUBMIT & PRINT</button>
         </div>
     </div>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxqfYLSn70aFyPW7CtH0uXe5VSawo3Karj-n0ayXQOsTKq88YEuzTvklJOl5Poj5Kqx/exec';
-    let images = { p: "", s: "" };
+    let imgs = { p: "", s: "" };
 
     window.onload = async () => {
         const res = await fetch(scriptURL);
         const headers = await res.json();
-        const container = document.getElementById('dynamicFields');
-        let counter = 1;
-
+        const div = document.getElementById('dynamicFields');
+        let n = 3;
         headers.forEach(h => {
             const head = h.trim();
-            const skip = ["Photo of Students", "Signature", "Application No", "S.No"];
-            if(head && !skip.includes(head)) {
-                let type = head.toLowerCase().includes("date") ? "date" : "text";
-                container.innerHTML += `
-                    <div class="field">
-                        <label>${counter}. ${head}</label>
-                        <input type="${type}" name="${head}">
-                    </div>`;
-                counter++;
+            if(head && !["Photo of Students", "Signature", "Application No", "S.No"].includes(head)) {
+                div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${head.toLowerCase().includes('date')?'date':'text'}" name="${head}"></div>`;
+                n++;
             }
         });
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('admissionForm').style.display = 'block';
     };
 
-    function handleFile(input, id) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
+    function upImg(i, id) {
+        const r = new FileReader();
+        r.onload = (e) => {
             document.getElementById(id).innerHTML = `<img src="${e.target.result}">`;
-            if(id === 'pPreview') images.p = e.target.result; else images.s = e.target.result;
+            if(id === 'p-pre') imgs.p = e.target.result; else imgs.s = e.target.result;
         };
-        reader.readAsDataURL(input.files[0]);
+        r.readAsDataURL(i.files[0]);
     }
 
-    function openPreview() {
-        const form = document.getElementById('admissionForm');
-        const data = new FormData(form);
-        let table = "";
-        data.forEach((val, key) => {
-            table += `<tr><td><strong>${key}</strong></td><td>${val || '---'}</td></tr>`;
-        });
-        document.getElementById('tableData').innerHTML = table;
-        document.getElementById('previewOverlay').style.display = 'block';
+    function openPre() {
+        const d = new FormData(document.getElementById('admissionForm'));
+        let h = '<table class="pre-table">';
+        d.forEach((v, k) => { h += `<tr><td><b>${k}</b></td><td>${v||'N/A'}</td></tr>`; });
+        document.getElementById('preContent').innerHTML = h + '</table>';
+        document.getElementById('modal').style.display = 'block';
     }
 
-    function closePreview() { document.getElementById('previewOverlay').style.display = 'none'; }
-
-    async function submitFinal() {
-        const btn = document.getElementById('finalSub');
-        btn.innerText = "Submitting Data..."; btn.disabled = true;
-        
-        const data = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
-        data.photoData = images.p;
-        data.sigData = images.s;
-
-        const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-        const result = await res.json();
-        
-        if(result.status === "Success") {
-            data.AppNo = result.appNo;
-            generatePDF(data);
-            alert("Success! Application No: " + result.appNo);
+    async function sendData() {
+        const b = document.getElementById('fBtn'); b.innerText = "Saving..."; b.disabled = true;
+        const d = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
+        d.photoData = imgs.p; d.sigData = imgs.s;
+        const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(d) });
+        const r = await res.json();
+        if(r.status === "Success") {
+            d.AppNo = r.appNo;
+            printAMU(d);
+            alert("Success! App No: " + r.appNo);
             location.reload();
         }
     }
 
-    function generatePDF(data) {
+    function printAMU(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        
+        // 1. Border
         doc.rect(5, 5, 200, 287);
-        doc.setTextColor(26, 93, 26);
-        doc.setFontSize(20);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
-        if(images.p) doc.addImage(images.p, 'JPEG', 160, 30, 35, 40);
-        doc.setFontSize(11); doc.setTextColor(0);
-        doc.text("App No: " + data.AppNo, 15, 35);
         
-        const rows = Object.entries(data).filter(([k])=>!k.includes('Data')).map(([k,v])=>[k,v || "---"]);
-        doc.autoTable({ startY: 75, body: rows, theme: 'grid' });
-        
-        if(images.s) doc.addImage(images.s, 'JPEG', 150, doc.lastAutoTable.finalY + 10, 40, 15);
-        doc.save(data.AppNo + ".pdf");
-    }
+        // 2. AMU Style Header
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("IQRA PUBLIC SCHOOL", 105, 18, {align:'center'});
+        doc.setFontSize(9);
+        doc.text("Mathurapur, Barsoi, Katihar-855102 | Session 2026-27", 105, 23, {align:'center'});
+        doc.setFontSize(11);
+        doc.text("ADMISSION CARD", 105, 30, {align:'center'});
+        doc.line(85, 31, 125, 31);
 
-    async function searchRecord() {
-        const id = document.getElementById('searchApp').value;
-        if(!id) return alert("Enter Application Number");
-        alert("Searching for: " + id + "... (Feature linked to your Sheet)");
+        // 3. Photo & App No (AMU Style)
+        if(imgs.p) doc.addImage(imgs.p, 'JPEG', 15, 40, 32, 38);
+        doc.rect(15, 40, 32, 38);
+        
+        doc.setFontSize(10);
+        doc.text("Application No: " + data.AppNo, 55, 45);
+        doc.text("Status: SUBMITTED", 55, 51);
+        doc.text("Nationality: Indian", 55, 57);
+
+        // 4. Details Table (Manual Grid to match AMU)
+        let y = 85;
+        doc.setFontSize(9);
+        const entries = Object.entries(data).filter(([k])=>!k.includes('Data'));
+        
+        entries.forEach((item, i) => {
+            if(y > 250) { doc.addPage(); doc.rect(5, 5, 200, 287); y = 20; }
+            doc.setFont("helvetica", "bold");
+            doc.text(item[0].toUpperCase() + ":", 15, y);
+            doc.setFont("helvetica", "normal");
+            doc.text(String(item[1] || "N/A"), 80, y);
+            doc.line(15, y+2, 195, y+2);
+            y += 8;
+        });
+
+        // 5. Instructions
+        y += 10;
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "italic");
+        doc.text("Declaration: I hereby declare that all information is true to my knowledge.", 15, y);
+        
+        // 6. Signature Section
+        if(imgs.s) doc.addImage(imgs.s, 'JPEG', 150, y + 5, 35, 12);
+        doc.line(150, y+18, 190, y+18);
+        doc.text("Student Signature", 158, y+22);
+
+        doc.save(data.AppNo + ".pdf");
     }
 </script>
 </body>
