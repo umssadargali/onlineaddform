@@ -56,7 +56,6 @@
             1. I solemnly undertake to accept and abide by the rules of the school.<br>
             2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
             3. If at any time, the entries are found incorrect, the admission may be cancelled.<br>
-            
             <label class="agree-row">
                 <input type="checkbox" id="agreeCheck" onchange="document.getElementById('submitBtn').disabled = !this.checked">
                 I agree to the above declaration.
@@ -81,29 +80,27 @@
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwoPQTTMbHzNf9l6GrovN8vc7V8Ld0BWPyEQn2vVZqKDqjcUxXcP9gFb95ucxJa7Sl_/exec';
     let imgs = { p: "", s: "" };
-    let headersList = [];
 
     window.onload = async () => {
         try {
             const res = await fetch(scriptURL);
-            headersList = await res.json();
+            const headers = await res.json();
             const div = document.getElementById('dynamicFields');
             let n = 1;
 
-            headersList.forEach(h => {
+            headers.forEach(h => {
                 const head = h.trim();
-                // "Photo of Student" aur "Signature" ko skip karke baaki sab show karega
+                // Ab sirf Photo, Signature aur Application No ko skip karenge. 
+                // Serial No aur Admission Date manual bharne ke liye list mein rahenge.
                 if(head && !["Photo of Student", "Photo of Students", "Signature", "Application No"].includes(head)) {
-                    let type = head.toLowerCase().includes('date') ? 'date' : 'text';
-                    div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${type}" name="${head}"></div>`;
+                    div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${head.toLowerCase().includes('date')?'date':'text'}" name="${head}"></div>`;
                     n++;
                 }
             });
 
             document.getElementById('photoLabel').innerText = n + ". Student Photo";
             document.getElementById('sigLabel').innerText = (n + 1) + ". Signature";
-
-        } catch(e) { console.log("Load Error"); }
+        } catch(e) { console.log("Header error"); }
     };
 
     function upImg(i, id) {
@@ -132,17 +129,13 @@
             const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(d) });
             const r = await res.json();
             if(r.status === "Success") {
-                d.AppNo = r.sNo || r.appNo;
-                // PDF ke liye data taiyar
-                d["Serial No. of Admission"] = d.AppNo;
-                d["Photo of Student"] = imgs.p;
-                d["Signature"] = imgs.s;
-                
+                // PDF ke liye App No ya Manual Serial No set karein
+                d.AppNo = d["Serial no. of Admission"] || r.appNo;
                 printAMU(d);
-                alert("Success! Serial No: " + d.AppNo);
+                alert("Success! App No: " + d.AppNo);
                 location.reload();
             }
-        } catch(e) { alert("Submission error"); b.disabled = false; b.innerText = "FINAL SUBMIT"; }
+        } catch(e) { alert("Error!"); b.disabled = false; b.innerText = "FINAL SUBMIT"; }
     }
 
     function printAMU(data) {
@@ -154,34 +147,45 @@
         doc.setTextColor(150, 0, 0); 
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
+        doc.text("Session : 2026-27", 105, 20, {align:'center'});
+        doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
         doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        if(data["Photo of Student"]) {
-            doc.addImage(data["Photo of Student"], 'JPEG', 160, 10, 35, 42); 
+        if(imgs.p) {
+            doc.addImage(imgs.p, 'JPEG', 160, 10, 35, 42); 
             doc.rect(160, 10, 35, 42); 
         }
 
         const qrDiv = document.createElement('div');
-        new QRCode(qrDiv, { text: String(data["Serial No. of Admission"]), width: 100, height: 100 });
+        new QRCode(qrDiv, { text: String(data.AppNo), width: 100, height: 100 });
         
         setTimeout(() => {
             const qrCanvas = qrDiv.querySelector('canvas');
             doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 90, 35, 25, 25); 
 
             let y = 70;
-            // PDF bhi dynamic: Saare columns jo sheet mein honge wo print honge
-            headersList.forEach(head => {
-                const h = head.trim();
-                if(h && !["Photo of Student", "Photo of Students", "Signature"].includes(h)) {
+            const groups = [
+                { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
+                { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence"] },
+                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] },
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading", "Serial no. of Admission", "Date of Admission"] }
+            ];
+
+            groups.forEach(g => {
+                doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 6, 'F');
+                doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+                doc.text(g.t.toUpperCase(), 12, y + 4.5);
+                y += 10;
+                doc.setFont("helvetica", "normal");
+                g.k.forEach(key => {
                     doc.setFont("helvetica", "bold");
-                    doc.setFontSize(9);
-                    doc.text(h + ":", 12, y);
+                    doc.text(key + ":", 12, y);
                     doc.setFont("helvetica", "normal");
-                    doc.text(String(data[h] || "N/A"), 75, y);
+                    doc.text(String(data[key] || "N/A"), 75, y);
                     doc.line(10, y+1.5, 200, y+1.5);
                     y += 8;
-                    if(y > 250) { doc.addPage(); doc.rect(5, 5, 200, 287); y = 20; }
-                }
+                });
+                y += 5;
             });
 
             y = 255;
@@ -192,14 +196,5 @@
             doc.setFont("helvetica", "normal");
             doc.text(splitDec, 10, y + 4);
 
-            if(data["Signature"]) {
-                doc.addImage(data["Signature"], 'JPEG', 160, 268, 30, 10);
-            }
-            doc.line(160, 280, 195, 280);
-            doc.text("Student Signature", 165, 284);
-            doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
-        }, 600);
-    }
-</script>
-</body>
-</html>
+            if(imgs.s) doc.addImage(imgs.s, 'JPEG', 160, 268, 30, 10);
+            doc.line(160,
