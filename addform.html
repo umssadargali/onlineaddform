@@ -23,7 +23,7 @@
     <div class="highlight">SEARCH ADMISSION FORM</div>
 
     <div class="input-group">
-        <label>Student Full Name (As per Sheet)</label>
+        <label>Student Full Name</label>
         <input type="text" id="sName" placeholder="Enter full name">
     </div>
     <div class="input-group">
@@ -41,8 +41,16 @@
 </div>
 
 <script>
-    // Aapki Script URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwoPQTTMbHzNf9l6GrovN8vc7V8Ld0BWPyEQn2vVZqKDqjcUxXcP9gFb95ucxJa7Sl_/exec';
+
+    // 1. DATE FIX FUNCTION: Timestamp ko saaf karne ke liye
+    function formatDate(val) {
+        if (!val) return "N/A";
+        if (typeof val === 'string' && val.includes('T')) {
+            return val.split('T')[0]; // Sirf 2015-03-11 rakhega
+        }
+        return val;
+    }
 
     async function search() {
         const name = document.getElementById('sName').value;
@@ -59,7 +67,7 @@
             msg.style.display = "none";
 
             if(data === "Not Found") {
-                alert("No record found with this Name and Details."); //
+                alert("No record found.");
             } else {
                 printAMUGrid(data);
             }
@@ -74,13 +82,11 @@
         const doc = new jsPDF('p', 'mm', 'a4');
         doc.rect(5, 5, 200, 287);
         
-        // Top Left Details
         doc.setFontSize(8); doc.setFont("helvetica", "bold");
         doc.text("Application Number: " + (data["Application No"] || "N/A"), 10, 12);
         doc.text("Serial No of Admission: " + (data["Serial no. of Admission"] || ""), 10, 16);
-        doc.text("Date of Admission: " + (data["Date of Admission"] || ""), 10, 20);
+        doc.text("Date of Admission: " + formatDate(data["Date of Admission"]), 10, 20);
 
-        // AMU Style Header
         doc.setFontSize(13); doc.setTextColor(150, 0, 0);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
@@ -88,14 +94,13 @@
         doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
         doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        // Photo Fix
+        // Photo Handling
         const photoData = data["Photo of Student"] || data["Photo of Students"];
         if(photoData && photoData.startsWith("data:image")) {
             doc.addImage(photoData, 'JPEG', 165, 10, 30, 38);
-            doc.rect(165, 10, 30, 38);
         }
+        doc.rect(165, 10, 30, 38);
 
-        // QR Code
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
         
@@ -103,7 +108,7 @@
             const qrCanvas = qrDiv.querySelector('canvas');
             doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20); 
 
-            let y = 62; // Table Start
+            let y = 62; 
             const groups = [
                 { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
                 { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence", "Aadhaar Number"] },
@@ -115,31 +120,33 @@
             groups.forEach(g => {
                 doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 5, 'F');
                 doc.setFont("helvetica", "bold"); doc.text(g.t.toUpperCase(), 12, y + 3.8);
-                y += 6; // Heading gap
+                y += 7; 
 
                 for (let i = 0; i < g.k.length; i += 2) {
                     let k1 = g.k[i], k2 = g.k[i+1];
-                    // Left Column
+                    // Clean Date for display
+                    let val1 = (k1.includes("Date")) ? formatDate(data[k1]) : (data[k1] || "N/A");
+                    let val2 = (k2 && k2.includes("Date")) ? formatDate(data[k2]) : (data[k2] || "N/A");
+
                     doc.setFont("helvetica", "bold"); doc.text(k1 + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[k1] || "N/A"), 45, y);
-                    // Right Column
+                    doc.setFont("helvetica", "normal"); doc.text(String(val1), 45, y);
+                    
                     if(k2) {
                         doc.setFont("helvetica", "bold"); doc.text(k2 + ":", 105, y);
-                        doc.setFont("helvetica", "normal"); doc.text(String(data[k2] || "N/A"), 140, y);
+                        doc.setFont("helvetica", "normal"); doc.text(String(val2), 140, y);
                     }
                     doc.setDrawColor(200); doc.line(10, y+1.5, 200, y+1.5);
-                    y += 6.5; // Line Spacing
+                    y += 7.5; 
                 }
-                y += 2; // Section Gap
+                y += 3; 
             });
 
-            // Declaration & Signatures Fix
             y = 262; 
             doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
             doc.setFont("helvetica", "normal");
             doc.text("I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.", 10, y + 3);
 
-            y = 280; // Signature Line Position
+            y = 280; 
             const sigData = data["Signature"];
             if(sigData && sigData.startsWith("data:image")) {
                 doc.addImage(sigData, 'JPEG', 10, y-10, 25, 7);
@@ -150,7 +157,7 @@
             doc.line(145, y, 190, y); doc.text("Principal's Signature", 150, y + 3.5);
 
             doc.save("Search_Admission_" + (data["Name of Student"] || "Form") + ".pdf");
-        }, 600);
+        }, 800);
     }
 </script>
 </body>
