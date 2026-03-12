@@ -22,7 +22,7 @@
         .btn-main:disabled { background: #ccc; cursor: not-allowed; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
         .modal-body { background: white; width: 90%; max-width: 700px; margin: 20px auto; padding: 20px; max-height: 90vh; overflow-y: auto; }
-        .pre-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pre-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .pre-table td { border: 1px solid #ddd; padding: 6px; }
     </style>
 </head>
@@ -54,7 +54,6 @@
             <b>DECLARATION:</b><br>
             1. I solemnly undertake to accept and abide by the rules of the school.<br>
             2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
-            3. If at any time, the entries are found incorrect, the admission may be cancelled.<br>
             <label class="agree-row">
                 <input type="checkbox" id="agreeCheck" onchange="document.getElementById('submitBtn').disabled = !this.checked">
                 I agree to the above declaration.
@@ -67,7 +66,7 @@
 
 <div id="modal">
     <div class="modal-body">
-        <h3 style="text-align:center;">FORM PREVIEW</h3>
+        <h3 style="text-align:center;">PREVIEW</h3>
         <div id="preContent"></div>
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button onclick="document.getElementById('modal').style.display='none'" style="flex:1; padding:10px;">Edit</button>
@@ -97,7 +96,7 @@
             });
             document.getElementById('photoLabel').innerText = n + ". Student Photo";
             document.getElementById('sigLabel').innerText = (n + 1) + ". Signature";
-        } catch(e) { console.log("Header error"); }
+        } catch(e) { console.log("Header Error"); }
     };
 
     function upImg(i, id) {
@@ -138,14 +137,13 @@
         const doc = new jsPDF('p', 'mm', 'a4');
         doc.rect(5, 5, 200, 287);
         
-        // Top Left Details
+        // Header Details
         doc.setFontSize(8); doc.setFont("helvetica", "bold");
         doc.text("Application Number: " + (data.FinalAppNo || ""), 10, 12);
         doc.text("Serial No of Admission: " + (data["Serial no. of Admission"] || ""), 10, 16);
         doc.text("Date of Admission: " + (data["Date of Admission"] || ""), 10, 20);
 
-        // Center Header
-        doc.setFontSize(14); doc.setTextColor(150, 0, 0);
+        doc.setFontSize(13); doc.setTextColor(150, 0, 0);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
         doc.text("Session : 2026-27", 105, 20, {align:'center'});
@@ -159,54 +157,68 @@
         
         setTimeout(() => {
             const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 22, 22); 
+            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20); 
 
-            let y = 65;
+            let y = 62;
             const groups = [
                 { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
                 { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence"] },
-                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] },
-                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading"] }
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading"] },
+                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] }
             ];
 
+            doc.setFontSize(8);
             groups.forEach(g => {
-                doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 6, 'F');
-                doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-                doc.text(g.t.toUpperCase(), 12, y + 4.5);
-                y += 9;
-                g.k.forEach(key => {
-                    doc.setFont("helvetica", "bold"); doc.text(key + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[key] || "N/A"), 70, y);
-                    doc.line(10, y+1.2, 200, y+1.2); y += 7;
-                });
+                doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 5, 'F');
+                doc.setFont("helvetica", "bold"); doc.text(g.t.toUpperCase(), 12, y + 3.8);
+                y += 6;
+
+                // GRID/TABLE FORM (Two Columns)
+                for (let i = 0; i < g.k.length; i += 2) {
+                    let k1 = g.k[i], k2 = g.k[i+1];
+                    // Col 1
+                    doc.setFont("helvetica", "bold"); doc.text(k1 + ":", 12, y);
+                    doc.setFont("helvetica", "normal"); doc.text(String(data[k1] || "N/A"), 45, y);
+                    // Col 2
+                    if(k2) {
+                        doc.setFont("helvetica", "bold"); doc.text(k2 + ":", 105, y);
+                        doc.setFont("helvetica", "normal"); doc.text(String(data[k2] || "N/A"), 140, y);
+                    }
+                    doc.setDrawColor(200); doc.line(10, y+1.5, 200, y+1.5);
+                    y += 6.5;
+                }
                 y += 2;
             });
 
-            // Extra Fields Logic
+            // Additional Info in Grid
             let usedK = groups.flatMap(g => g.k).concat(["Photo of Student", "Signature", "Application No", "Serial no. of Admission", "Date of Admission"]);
             let extraK = globalHeaders.filter(h => !usedK.includes(h.trim()) && h.trim() !== "");
             if(extraK.length > 0) {
-                doc.setFillColor(245, 245, 255); doc.rect(10, y, 190, 6, 'F');
-                doc.text("ADDITIONAL INFORMATION", 12, y + 4.5); y += 9;
-                extraK.forEach(k => {
-                    doc.setFont("helvetica", "bold"); doc.text(k.trim() + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[k.trim()] || "N/A"), 70, y);
-                    doc.line(10, y+1.2, 200, y+1.2); y += 7;
-                });
+                doc.setFillColor(245, 245, 245); doc.rect(10, y, 190, 5, 'F');
+                doc.setFont("helvetica", "bold"); doc.text("OTHER INFORMATION", 12, y + 3.8); y += 6;
+                for (let i = 0; i < extraK.length; i += 2) {
+                    let k1 = extraK[i], k2 = extraK[i+1];
+                    doc.setFont("helvetica", "bold"); doc.text(k1.trim() + ":", 12, y);
+                    doc.setFont("helvetica", "normal"); doc.text(String(data[k1.trim()] || "N/A"), 45, y);
+                    if(k2) {
+                        doc.setFont("helvetica", "bold"); doc.text(k2.trim() + ":", 105, y);
+                        doc.setFont("helvetica", "normal"); doc.text(String(data[k2.trim()] || "N/A"), 140, y);
+                    }
+                    doc.line(10, y+1.5, 200, y+1.5); y += 6.5;
+                }
             }
 
-            // Declaration
-            y = 255;
-            doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-            const dec = "I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.";
-            doc.setFont("helvetica", "normal"); doc.text(doc.splitTextToSize(dec, 185), 10, y + 4);
+            // Declaration & Signatures
+            y = 262;
+            doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
+            doc.setFont("helvetica", "normal");
+            doc.text("I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.", 10, y + 3);
 
-            // Triple Signature Grid
-            y = 278; doc.setFontSize(8); doc.setFont("helvetica", "bold");
-            if(imgs.s) doc.addImage(imgs.s, 'JPEG', 10, y-10, 30, 8);
-            doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4); // Left
-            doc.line(80, y, 120, y); doc.text("Guardian's Signature", 82, y + 4); // Middle
-            doc.line(155, y, 195, y); doc.text("Principal's Signature", 158, y + 4); // Right
+            y = 280;
+            if(imgs.s) doc.addImage(imgs.s, 'JPEG', 10, y-10, 25, 7);
+            doc.line(10, y, 55, y); doc.text("Student Signature", 15, y + 3.5);
+            doc.line(77, y, 122, y); doc.text("Guardian's Signature", 82, y + 3.5);
+            doc.line(145, y, 190, y); doc.text("Principal's Signature", 150, y + 3.5);
 
             doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
         }, 600);
