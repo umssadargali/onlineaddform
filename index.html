@@ -42,12 +42,12 @@
         <div id="dynamicFields" class="grid"></div>
         <div class="uploads">
             <div class="field">
-                <label>1. Student Photo</label>
+                <label id="photoLabel">Photo</label>
                 <input type="file" accept="image/*" onchange="upImg(this, 'p-pre')">
                 <div id="p-pre" class="preview" style="margin-top:5px;">PHOTO</div>
             </div>
             <div class="field">
-                <label>2. Signature</label>
+                <label id="sigLabel">Signature</label>
                 <input type="file" accept="image/*" onchange="upImg(this, 's-pre')">
                 <div id="s-pre" class="preview" style="margin-top:5px; width:180px; height:50px;">SIGNATURE</div>
             </div>
@@ -79,17 +79,26 @@
             const res = await fetch(scriptURL);
             const headers = await res.json();
             const div = document.getElementById('dynamicFields');
-            let n = 3;
+            let n = 1; // Numbering starts from 1 for Serial No.
+
             headers.forEach(h => {
                 const head = h.trim();
+                // Skip specific headers that are handled separately
                 if(head && !["Photo of Students", "Signature", "Application No", "S.No"].includes(head)) {
                     div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${head.toLowerCase().includes('date')?'date':'text'}" name="${head}"></div>`;
                     n++;
                 }
             });
+
+            // Update Photo and Signature labels with last numbers
+            document.getElementById('photoLabel').innerText = n + ". Student Photo";
+            document.getElementById('sigLabel').innerText = (n + 1) + ". Signature";
+
         } catch(e) { console.log("Header error"); }
     };
 
+    // --- Rest of functions (upImg, openPre, sendData, searchRecord, printAMU) remain unchanged ---
+    
     function upImg(i, id) {
         const r = new FileReader();
         r.onload = (e) => {
@@ -132,29 +141,23 @@
     function printAMU(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        
-        // 1. Page Border
         doc.rect(5, 5, 200, 287);
-        
-        // 2. Header (AMU Style)
         doc.setFont("helvetica", "bold");
         doc.setFontSize(14);
         doc.setTextColor(150, 0, 0); 
-        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 15, {align:'center'});
         doc.setFontSize(10);
         doc.setTextColor(0);
         doc.text("Session : 2026-27", 105, 20, {align:'center'});
-        doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
+        doc.text("Application Form for admission", 105, 25, {align:'center'});
         doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        // 3. Photo (Right Side) & QR Code
         if(imgs.p || data["Photo of Students"]) {
             let pSrc = imgs.p || data["Photo of Students"];
             doc.addImage(pSrc, 'JPEG', 160, 10, 35, 42); 
             doc.rect(160, 10, 35, 42); 
         }
 
-        // QR Code Logic
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: data.AppNo || data["Application No"], width: 100, height: 100 });
         
@@ -163,7 +166,6 @@
             const qrData = qrCanvas.toDataURL("image/png");
             doc.addImage(qrData, 'PNG', 90, 35, 25, 25); 
 
-            // 4. Data Grouping
             let y = 70;
             const groups = [
                 { t: "Personal Details", k: ["Name of Students", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
@@ -179,7 +181,6 @@
                 doc.setFontSize(9);
                 doc.text(g.t.toUpperCase(), 12, y + 4.5);
                 y += 10;
-
                 doc.setFont("helvetica", "normal");
                 g.k.forEach(key => {
                     let val = data[key] || "N/A";
@@ -193,7 +194,6 @@
                 y += 5;
             });
 
-            // 5. AMU Declaration
             y = 255;
             doc.setFontSize(7.5);
             doc.setFont("helvetica", "bold");
@@ -203,14 +203,12 @@
             doc.setFont("helvetica", "normal");
             doc.text(splitDec, 10, y + 4);
 
-            // 6. Signature Area
             if(imgs.s || data["Signature"]) {
                 let sSrc = imgs.s || data["Signature"];
                 doc.addImage(sSrc, 'JPEG', 160, 268, 30, 10);
             }
             doc.line(160, 280, 195, 280);
             doc.text("Student Signature", 165, 284);
-
             doc.save("Application_" + (data.AppNo || "Form") + ".pdf");
         }, 500);
     }
