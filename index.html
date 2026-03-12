@@ -87,10 +87,8 @@
             globalHeaders = await res.json();
             const div = document.getElementById('dynamicFields');
             let n = 1;
-
             globalHeaders.forEach(h => {
                 const head = h.trim();
-                // "Photo" aur "Signature" aur "Application No" ko chhod kar sab dikhayega
                 if(head && !["Photo of Student", "Photo of Students", "Signature", "Application No"].includes(head)) {
                     let type = head.toLowerCase().includes('date') ? 'date' : 'text';
                     div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${type}" name="${head}"></div>`;
@@ -99,7 +97,7 @@
             });
             document.getElementById('photoLabel').innerText = n + ". Student Photo";
             document.getElementById('sigLabel').innerText = (n + 1) + ". Signature";
-        } catch(e) { alert("Server Connection Error!"); }
+        } catch(e) { console.log("Header error"); }
     };
 
     function upImg(i, id) {
@@ -123,18 +121,16 @@
         const b = document.getElementById('fBtn'); b.innerText = "Processing..."; b.disabled = true;
         const d = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
         d.photoData = imgs.p; d.sigData = imgs.s;
-        
         try {
             const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(d) });
             const r = await res.json();
             if(r.status === "Success") {
-                // Serial No handle karna (Manual ya Auto)
-                d.FinalAppNo = d["Serial no. of Admission"] || r.sNo || r.appNo;
+                d.FinalAppNo = r.appNo;
                 printAMU(d);
                 alert("Success! ID: " + d.FinalAppNo);
                 location.reload();
             }
-        } catch(e) { alert("Submission Error!"); b.disabled = false; }
+        } catch(e) { alert("Error!"); b.disabled = false; }
     }
 
     function printAMU(data) {
@@ -142,68 +138,76 @@
         const doc = new jsPDF('p', 'mm', 'a4');
         doc.rect(5, 5, 200, 287);
         
-        // Header
-        doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(150, 0, 0);
+        // Top Left Details
+        doc.setFontSize(8); doc.setFont("helvetica", "bold");
+        doc.text("Application Number: " + (data.FinalAppNo || ""), 10, 12);
+        doc.text("Serial No of Admission: " + (data["Serial no. of Admission"] || ""), 10, 16);
+        doc.text("Date of Admission: " + (data["Date of Admission"] || ""), 10, 20);
+
+        // Center Header
+        doc.setFontSize(14); doc.setTextColor(150, 0, 0);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 25, {align:'center'});
+        doc.text("Session : 2026-27", 105, 20, {align:'center'});
+        doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        if(imgs.p) { doc.addImage(imgs.p, 'JPEG', 160, 10, 35, 42); doc.rect(160, 10, 35, 42); }
+        if(imgs.p) { doc.addImage(imgs.p, 'JPEG', 165, 10, 30, 38); doc.rect(165, 10, 30, 38); }
 
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: String(data.FinalAppNo), width: 100, height: 100 });
         
         setTimeout(() => {
             const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 90, 35, 25, 25); 
+            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 22, 22); 
 
-            let y = 70;
-            // DYNAMIC GROUPING: Purane groups bhi rahenge, aur Naye columns "Other Details" mein jayenge
+            let y = 65;
             const groups = [
                 { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
                 { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence"] },
                 { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] },
-                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading", "Serial no. of Admission", "Date of Admission"] }
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading"] }
             ];
 
-            // 1. Defined Groups Print Karein
             groups.forEach(g => {
                 doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 6, 'F');
                 doc.setFont("helvetica", "bold"); doc.setFontSize(9);
                 doc.text(g.t.toUpperCase(), 12, y + 4.5);
-                y += 10;
+                y += 9;
                 g.k.forEach(key => {
                     doc.setFont("helvetica", "bold"); doc.text(key + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[key] || "N/A"), 75, y);
-                    doc.line(10, y+1.5, 200, y+1.5); y += 8;
+                    doc.setFont("helvetica", "normal"); doc.text(String(data[key] || "N/A"), 70, y);
+                    doc.line(10, y+1.2, 200, y+1.2); y += 7;
                 });
-                y += 4;
+                y += 2;
             });
 
-            // 2. EXTRA COLUMNS: Jo kisi group mein nahi hain, wo yahan print honge
-            let usedKeys = groups.flatMap(g => g.k).concat(["Photo of Student", "Signature", "Application No"]);
-            let extraKeys = globalHeaders.filter(h => !usedKeys.includes(h.trim()) && h.trim() !== "");
-
-            if(extraKeys.length > 0) {
-                doc.setFillColor(230, 230, 255); doc.rect(10, y, 190, 6, 'F');
-                doc.text("ADDITIONAL INFORMATION", 12, y + 4.5);
-                y += 10;
-                extraKeys.forEach(k => {
-                    doc.setFont("helvetica", "bold"); doc.text(k + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[k] || "N/A"), 75, y);
-                    doc.line(10, y+1.5, 200, y+1.5); y += 8;
-                    if(y > 260) { doc.addPage(); doc.rect(5, 5, 200, 287); y = 20; }
+            // Extra Fields Logic
+            let usedK = groups.flatMap(g => g.k).concat(["Photo of Student", "Signature", "Application No", "Serial no. of Admission", "Date of Admission"]);
+            let extraK = globalHeaders.filter(h => !usedK.includes(h.trim()) && h.trim() !== "");
+            if(extraK.length > 0) {
+                doc.setFillColor(245, 245, 255); doc.rect(10, y, 190, 6, 'F');
+                doc.text("ADDITIONAL INFORMATION", 12, y + 4.5); y += 9;
+                extraK.forEach(k => {
+                    doc.setFont("helvetica", "bold"); doc.text(k.trim() + ":", 12, y);
+                    doc.setFont("helvetica", "normal"); doc.text(String(data[k.trim()] || "N/A"), 70, y);
+                    doc.line(10, y+1.2, 200, y+1.2); y += 7;
                 });
             }
 
-            // Declaration & Signature
+            // Declaration
             y = 255;
             doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-            const dec = "I SOLEMNLY UNDERTAKE to accept and abide by the rules of the school. I hereby affirm that the entries made by me above are true to the best of my knowledge and belief.";
+            const dec = "I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.";
             doc.setFont("helvetica", "normal"); doc.text(doc.splitTextToSize(dec, 185), 10, y + 4);
 
-            if(imgs.s) doc.addImage(imgs.s, 'JPEG', 160, 268, 30, 10);
-            doc.text("Student Signature", 165, 284);
+            // Triple Signature Grid
+            y = 278; doc.setFontSize(8); doc.setFont("helvetica", "bold");
+            if(imgs.s) doc.addImage(imgs.s, 'JPEG', 10, y-10, 30, 8);
+            doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4); // Left
+            doc.line(80, y, 120, y); doc.text("Guardian's Signature", 82, y + 4); // Middle
+            doc.line(155, y, 195, y); doc.text("Principal's Signature", 158, y + 4); // Right
+
             doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
         }, 600);
     }
