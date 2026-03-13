@@ -24,6 +24,8 @@
         .modal-body { background: white; width: 90%; max-width: 700px; margin: 20px auto; padding: 20px; max-height: 90vh; overflow-y: auto; }
         .pre-table { width: 100%; border-collapse: collapse; font-size: 11px; }
         .pre-table td { border: 1px solid #ddd; padding: 6px; }
+        .action-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-print { display: none; background: #000; color: #fff; flex: 2; padding: 10px; border: none; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -66,9 +68,10 @@
         <h3 style="text-align:center;">PREVIEW</h3>
         <div id="preContent"></div>
         <div id="qrHidden" style="display:none;"></div>
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button onclick="document.getElementById('modal').style.display='none'" style="flex:1; padding:10px;">Edit</button>
-            <button id="fBtn" onclick="sendData()" style="flex:2; padding:10px; background:var(--p); color:white; border:none; cursor:pointer;">FINAL SUBMIT & PRINT</button>
+        <div class="action-btns">
+            <button id="editBtn" onclick="document.getElementById('modal').style.display='none'" style="flex:1; padding:10px;">Edit</button>
+            <button id="fBtn" onclick="sendData()" style="flex:2; padding:10px; background:var(--p); color:white; border:none; cursor:pointer;">FINAL SUBMIT</button>
+            <button id="pBtn" class="btn-print">PRINT / SAVE PDF</button>
         </div>
     </div>
 </div>
@@ -77,6 +80,7 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
     let imgs = { p: "", s: "" };
     let globalHeaders = [];
+    let currentPDFBlob = null;
 
     window.onload = async () => {
         try {
@@ -86,7 +90,6 @@
             let n = 1;
             globalHeaders.forEach(h => {
                 const head = h.trim();
-                // Yahan hidden fields ko filter kar rahe hain
                 const hiddenFields = ["Photo of Student", "Photo of Students", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
                 if(head && !hiddenFields.includes(head)) {
                     let type = head.toLowerCase().includes('date') ? 'date' : 'text';
@@ -114,10 +117,13 @@
         d.forEach((v, k) => { h += `<tr><td><b>${k}</b></td><td>${v||'N/A'}</td></tr>`; });
         document.getElementById('preContent').innerHTML = h + '</table>';
         document.getElementById('modal').style.display = 'block';
+        document.getElementById('pBtn').style.display = 'none'; // Hide print until submit
     }
 
     async function sendData() {
-        const b = document.getElementById('fBtn'); b.innerText = "Processing..."; b.disabled = true;
+        const b = document.getElementById('fBtn'); 
+        b.innerText = "Processing..."; 
+        b.disabled = true;
         const d = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
         d.photoData = imgs.p; 
         d.sigData = imgs.s;
@@ -126,20 +132,24 @@
             const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(d) });
             const r = await res.json();
             if(r.status === "Success") {
-                // Mapping data from response for PDF
                 d.FinalAppNo = r.appNo;
                 d.FinalSNo = r.sNo;
-                d.AdmissionDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
-                printAMU(d);
+                d.AdmissionDate = new Date().toLocaleDateString('en-GB');
+                
+                b.style.display = "none"; // Hide submit btn
+                document.getElementById('editBtn').style.display = "none";
+                
+                generatePDFBlob(d); // Create PDF but don't open yet
             }
-        } catch(e) { alert("Error!"); b.disabled = false; b.innerText = "FINAL SUBMIT & PRINT"; }
+        } catch(e) { alert("Error!"); b.disabled = false; b.innerText = "FINAL SUBMIT"; }
     }
 
-    function printAMU(data) {
+    function generatePDFBlob(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        doc.rect(5, 5, 200, 287);
         
+        // Designing PDF
+        doc.rect(5, 5, 200, 287);
         doc.setFontSize(8); doc.setFont("helvetica", "bold");
         doc.text("Application Number: " + (data.FinalAppNo || ""), 10, 12);
         doc.text("Serial No of Admission: " + (data.FinalSNo || ""), 10, 16);
@@ -191,7 +201,6 @@
 
             y = 262;
             doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-            doc.setFont("helvetica", "normal");
             doc.text("I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.", 10, y + 3);
 
             y = 280;
@@ -200,10 +209,18 @@
             doc.line(77, y, 122, y); doc.text("Guardian's Signature", 82, y + 3.5);
             doc.line(145, y, 190, y); doc.text("Principal's Signature", 150, y + 3.5);
 
-            const pdfBlob = doc.output('blob');
-            const url = URL.createObjectURL(pdfBlob);
-            window.open(url, '_blank');
-            location.reload();
+            // Print Button Enable
+            const pBtn = document.getElementById('pBtn');
+            pBtn.style.display = "block";
+            pBtn.onclick = () => {
+                const pdfBlob = doc.output('blob');
+                const url = URL.createObjectURL(pdfBlob);
+                const win = window.open(url, '_blank');
+                if(!win) doc.save("Admission_" + data["Name of Student"] + ".pdf");
+                setTimeout(() => location.reload(), 1000);
+            };
+            
+            alert("Data Saved Successfully! Now click 'PRINT' to get your form.");
         }, 800);
     }
 </script>
