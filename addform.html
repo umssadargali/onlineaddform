@@ -1,49 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS - Search Admission</title>
+    <title>IPS - Search & Download Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; text-align: center; }
-        .box { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--p); }
-        .logo-text { color: var(--p); font-size: 24px; font-weight: bold; margin: 0; }
-        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; }
+        .box { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--p); text-align: center; }
+        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; text-transform: uppercase; }
         .input-group { text-align: left; margin-bottom: 15px; }
         label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: var(--p); outline: none; box-shadow: 0 0 5px rgba(26,93,26,0.2); }
-        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; box-shadow: 0 4px 10px rgba(26,93,26,0.3); }
-        .btn:active { transform: scale(0.98); }
+        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; }
         #msg { margin-top: 15px; font-size: 14px; color: var(--p); font-weight: 600; display: none; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <div class="logo-text">IQRA PUBLIC SCHOOL</div>
-    <p style="font-size:13px; color:#666; margin:5px 0;">Mathurapur, Barsoi, Katihar (Bihar)</p>
-    <div class="highlight">Search Admission Form</div>
+    <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
+    <div class="highlight">Find Admission Form</div>
 
     <div class="input-group">
         <label>Student Full Name</label>
-        <input type="text" id="sName" placeholder="As per Aadhaar">
+        <input type="text" id="sName" placeholder="Enter Full Name">
     </div>
     <div class="input-group">
         <label>Aadhaar Number</label>
-        <input type="number" id="sAadhar" placeholder="12 digit number">
-    </div>
-    
-    <div style="margin:15px 0; color:#aaa; font-size:12px; font-weight:bold;">— SECURITY VERIFICATION —</div>
-    
-    <div class="input-group">
-        <label>Date of Birth</label>
-        <input type="date" id="sDob">
+        <input type="number" id="sAadhar" placeholder="12 Digit Aadhaar">
     </div>
 
-    <button class="btn" id="searchBtn" onclick="search()">FIND & DOWNLOAD PDF</button>
-    <p id="msg">Searching Database... Please wait.</p>
+    <button class="btn" id="searchBtn" onclick="search()">SEARCH & DOWNLOAD PDF</button>
+    <p id="msg">Processing your request...</p>
 </div>
 
 <script>
@@ -58,64 +47,65 @@
     async function search() {
         const name = document.getElementById('sName').value.trim();
         const aadhar = document.getElementById('sAadhar').value.trim();
-        const dob = document.getElementById('sDob').value;
         const msg = document.getElementById('msg');
         const btn = document.getElementById('searchBtn');
 
-        if(!name || !aadhar) return alert("Please fill Name and Aadhaar Number");
+        if(!name || !aadhar) return alert("Please enter Name and Aadhaar");
 
         msg.style.display = "block";
         btn.disabled = true;
-        btn.style.opacity = "0.7";
 
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}&searchDOB=${dob}`);
-            const data = await res.json();
+            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
+            const student = await res.json();
             
             msg.style.display = "none";
             btn.disabled = false;
-            btn.style.opacity = "1";
 
-            if(data === "Not Found") {
-                alert("No record found. Please check your details.");
+            if(student === "Not Found") {
+                alert("Record not found!");
             } else {
-                printAMUGrid(data);
+                generatePDF(student);
             }
         } catch(e) {
             msg.style.display = "none";
             btn.disabled = false;
-            alert("Connection Error! Check your internet.");
+            alert("Connection Error!");
         }
     }
 
-    function printAMUGrid(data) {
+    function generatePDF(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         
-        // Page Border
-        doc.setLineWidth(0.5);
-        doc.rect(5, 5, 200, 287);
-        
-        // Header Section
+        // --- 1. Header & Design ---
+        doc.setLineWidth(0.5); doc.rect(5, 5, 200, 287);
         doc.setFontSize(8); doc.setFont("helvetica", "bold");
-        doc.text("Application Number: " + (data["Application No"] || "Pending..."), 10, 12);
-        doc.text("Serial No of Admission: " + (data["Serial No. of Admission"] || "Pending..."), 10, 16);
-        doc.text("Date of Admission: " + formatDate(data["Timestamp"] || data["Date"]), 10, 20);
-
-        doc.setFontSize(14); doc.setTextColor(183, 28, 28); // AMU Red
+        doc.text("App No: " + (data["Application No"] || "N/A"), 10, 12);
+        doc.text("Roll No: " + (data["Serial No. of Admission"] || "N/A"), 10, 16);
+        
+        doc.setFontSize(14); doc.setTextColor(183, 28, 28);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("Session : 2026-27", 105, 20, {align:'center'});
-        doc.setFont("helvetica", "bold");
-        doc.text("Application Form for Admission", 105, 25, {align:'center'});
-        doc.setFont("helvetica", "normal");
-        doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
+        doc.setFont("helvetica", "bold"); doc.text("Admission Form (2026-27)", 105, 26, {align:'center'});
 
-        // Photo Frame
+        // --- 2. Image Logic (The Fix) ---
+        // Automatically find photo and signature from any column containing "data:image"
+        let photo = "";
+        let sign = "";
+        Object.keys(data).forEach(key => {
+            const val = String(data[key]);
+            if(val.startsWith("data:image")) {
+                if(key.toLowerCase().includes("photo")) photo = val;
+                else if(key.toLowerCase().includes("signature") || key.toLowerCase().includes("sign")) sign = val;
+            }
+        });
+
+        // Photo placement
         doc.rect(165, 10, 30, 38); 
-        const photo = data["Photo of Student"] || data["photoData"];
-        if (photo && String(photo).startsWith("data:image")) {
-            doc.addImage(photo, 'JPEG', 165, 10, 30, 38);
+        if (photo) {
+            try { doc.addImage(photo, 'JPEG', 165, 10, 30, 38); } catch(e) { console.log("Photo error"); }
         }
 
         // QR Code
@@ -124,81 +114,43 @@
         
         setTimeout(() => {
             const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 33, 22, 22); 
+            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 32, 22, 22);
 
-            let y = 60; 
+            // --- 3. Data Grid ---
+            let y = 62;
             const sections = [
-                { title: "PERSONAL DETAILS", fields: [
-                    ["Student Name", data["Name of Student"]], ["Father's Name", data["Father's Name"]],
-                    ["Mother's Name", data["Mother's Name"]], ["Date of Birth", formatDate(data["Date of Birth"])],
-                    ["Caste", data["Caste"]], ["Category", data["Category"]],
-                    ["Aadhaar Number", data["Aadhaar Number"]]
-                ]},
-                { title: "CONTACT & ADDRESS", fields: [
-                    ["Mobile Number", data["Mobile Number"]], ["Residence", data["Permanent Residence"]]
-                ]},
-                { title: "ACADEMIC DETAILS", fields: [
-                    ["Previous School", data["Name & Place of Previous School"]], ["", ""],
-                    ["Reading Class", data["Class in which reading"]], ["TC No", data["T.C No."]],
-                    ["TC Date", formatDate(data["Date of T.C"])], ["Admitted Class", data["Class in which admitted"]],
-                    ["Leaving Date", formatDate(data["Date of leaving the School"])]
-                ]},
-                { title: "BANK DETAILS", fields: [
-                    ["Account Holder", data["Account Holder's Name"]], ["Bank Name", data["Bank Name"]],
-                    ["Account No", data["Bank Account Number"]], ["IFSC Code", data["IFSC"]]
-                ]}
+                { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Aadhaar Number"] },
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading", "Class in which admitted"] },
+                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC"] }
             ];
 
-            sections.forEach(sec => {
-                doc.setFillColor(235, 235, 235); doc.rect(10, y, 190, 6, 'F');
+            sections.forEach(s => {
+                doc.setFillColor(240); doc.rect(10, y, 190, 6, 'F');
                 doc.setFontSize(9); doc.setFont("helvetica", "bold");
-                doc.text(sec.title, 12, y + 4.5);
-                y += 6;
+                doc.text(s.t.toUpperCase(), 12, y + 4.5);
+                y += 8;
 
-                doc.setFontSize(8);
-                for(let i=0; i<sec.fields.length; i+=2) {
-                    let f1 = sec.fields[i], f2 = sec.fields[i+1];
-                    
-                    // Grid lines
-                    doc.setDrawColor(180);
-                    doc.rect(10, y, 95, 7); 
-                    if(f2) doc.rect(105, y, 95, 7);
-
-                    doc.setFont("helvetica", "bold"); doc.text(f1[0] + ":", 12, y + 4.5);
-                    doc.setFont("helvetica", "normal"); doc.text(String(f1[1] || "N/A"), 40, y + 4.5);
-
-                    if(f2 && f2[0]) {
-                        doc.setFont("helvetica", "bold"); doc.text(f2[0] + ":", 107, y + 4.5);
-                        doc.setFont("helvetica", "normal"); doc.text(String(f2[1] || "N/A"), 135, y + 4.5);
-                    }
+                s.k.forEach(key => {
+                    doc.setFontSize(8); doc.setFont("helvetica", "bold");
+                    doc.text(key + ":", 12, y);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(String(data[key] || "N/A"), 60, y);
+                    doc.setDrawColor(220); doc.line(10, y + 1.5, 200, y + 1.5);
                     y += 7;
-                }
+                });
                 y += 2;
             });
 
-            // Footer Section
-            y = 250;
-            doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-            doc.setFont("helvetica", "normal");
-            doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 4);
-            doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 7);
-            doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 10);
-
-            y = 280;
-            const sign = data["Signature"] || data["sigData"];
-            if (sign && String(sign).startsWith("data:image")) {
-                doc.addImage(sign, 'JPEG', 12, y - 12, 28, 10);
+            // --- 4. Signature Logic ---
+            if (sign) {
+                try { doc.addImage(sign, 'JPEG', 15, 268, 30, 10); } catch(e) { console.log("Sign error"); }
             }
-            
-            doc.setFontSize(8);
-            doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4);
-            doc.line(85, y, 125, y); doc.text("Guardian's Signature", 90, y + 4);
-            doc.line(160, y, 200, y); doc.text("Principal's Signature", 165, y + 4);
+            doc.line(10, 280, 50, 280); doc.text("Student Signature", 15, 284);
+            doc.line(160, 280, 200, 280); doc.text("Principal", 170, 284);
 
-            doc.save("Admission_Form_" + name.replace(/\s+/g, '_') + ".pdf");
+            doc.save("Admission_" + data["Name of Student"] + ".pdf");
         }, 1000);
     }
 </script>
-
 </body>
 </html>
