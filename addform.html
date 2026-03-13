@@ -1,123 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS - Search & Download Admission</title>
+    <title>IPS - Search Admission</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; text-align: center; }
-        .box { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--p); }
-        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; }
-        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; margin-bottom: 15px; }
-        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; }
-        #msg { margin-top: 15px; font-size: 14px; color: var(--p); font-weight: bold; display: none; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); padding: 20px; text-align: center; }
+        .box { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--p); }
+        .highlight { background: #d4af37; color: white; padding: 8px; font-weight: bold; margin: 15px 0; border-radius: 4px; display: inline-block; width: 90%; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; }
+        .btn { background: var(--p); color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="box">
     <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
-    <div class="highlight">SEARCH ADMISSION FORM</div>
+    <div class="highlight">SEARCH & SAVE ADMISSION FORM</div>
     <input type="text" id="sName" placeholder="Student Full Name">
-    <input type="number" id="sAadhar" placeholder="12 Digit Aadhaar Number">
-    <button class="btn" id="searchBtn" onclick="search()">FIND & SAVE PDF</button>
-    <p id="msg">Fetching Data & Images...</p>
+    <input type="number" id="sAadhar" placeholder="12 Digit Aadhaar">
+    <button class="btn" id="searchBtn" onclick="search()">SEARCH & DOWNLOAD PDF</button>
+    <p id="msg" style="display:none; color:var(--p); font-weight:bold;">Finding Record & Images...</p>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
-    // Universal Image Fix: Drive link ko direct image link mein badalta hai
-    function fixImageUrl(url) {
-        if (!url) return "";
-        if (url.includes("drive.google.com")) {
-            let id = "";
-            if (url.includes("id=")) id = url.split("id=")[1].split("&")[0];
-            else id = url.split("/d/")[1].split("/")[0];
-            return `https://lh3.googleusercontent.com/u/0/d/${id}`;
-        }
-        return url; // Agar Base64 hai toh waisa hi rehne dega
+    // Google Drive URL to Direct Link converter
+    function getDirectImg(url) {
+        if (!url || !url.includes("drive.google.com")) return url;
+        const id = url.match(/[-\w]{25,}/);
+        return id ? `https://lh3.googleusercontent.com/u/0/d/${id}` : url;
     }
 
     async function search() {
         const name = document.getElementById('sName').value.trim();
         const aadhar = document.getElementById('sAadhar').value.trim();
         const msg = document.getElementById('msg');
-        if(!name || !aadhar) return alert("Please enter Name and Aadhaar");
+        if(!name || !aadhar) return alert("Please fill Name and Aadhaar");
 
         msg.style.display = "block";
         try {
             const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
             const data = await res.json();
-            if(data === "Not Found") {
-                alert("No record found!");
-                msg.style.display = "none";
-            } else {
-                generatePDF(data);
-            }
+            msg.style.display = "none";
+            if(data === "Not Found") alert("No record found.");
+            else printForm(data);
         } catch(e) {
             msg.style.display = "none";
             alert("Connection Error!");
         }
     }
 
-    async function generatePDF(data) {
+    function printForm(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
+        doc.rect(5, 5, 200, 287);
         
-        // Header & Design
-        doc.setLineWidth(0.5); doc.rect(5, 5, 200, 287);
-        doc.setFontSize(14); doc.setTextColor(183, 28, 28);
+        // Header
+        doc.setFontSize(8); doc.setFont("helvetica", "bold");
+        doc.text("Application No: " + (data["Application No"] || "N/A"), 10, 12);
+        doc.text("Roll No: " + (data["Serial No. of Admission"] || ""), 10, 16);
+        
+        doc.setFontSize(13); doc.setTextColor(150, 0, 0);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("IQRA PUBLIC SCHOOL", 105, 22, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 20, {align:'center'});
+        doc.text("Admission Form Session 2026-27", 105, 25, {align:'center'});
 
-        // Image Processing
-        const photoUrl = fixImageUrl(data["Photo of Student"] || data["photoData"]);
-        const signUrl = fixImageUrl(data["Signature"] || data["sigData"]);
-
-        // Helper function to load any image format
-        const addImageToDoc = (url, x, y, w, h) => {
+        // Image Loader Function
+        const loadImg = (url, x, y, w, h) => {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
-                img.onload = function() {
-                    doc.addImage(this, 'JPEG', x, y, w, h);
-                    resolve();
-                };
-                img.onerror = () => resolve(); // Skip if fails
-                img.src = url;
+                img.onload = () => { doc.addImage(img, 'JPEG', x, y, w, h); resolve(); };
+                img.onerror = () => resolve();
+                img.src = getDirectImg(url);
             });
         };
 
         // QR Code
         const qrDiv = document.createElement('div');
-        new QRCode(qrDiv, { text: data["Application No"] || "IPS", width: 100, height: 100 });
-
+        new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
+        
         setTimeout(async () => {
-            // Load Photo and Sign
-            if(photoUrl) await addImageToDoc(photoUrl, 165, 10, 30, 38);
-            if(signUrl) await addImageToDoc(signUrl, 15, 268, 30, 10);
-            
+            // Photo & QR
+            await loadImg(data["Photo of Student"] || data["photoData"], 165, 10, 30, 38);
             const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20);
+            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 32, 22, 22); 
 
-            // Data Table Logic
-            doc.setFontSize(9); doc.setFont("helvetica", "bold");
-            doc.text("PERSONAL DETAILS", 12, 65);
-            doc.setFont("helvetica", "normal");
-            doc.text(`Student Name: ${data["Name of Student"] || 'N/A'}`, 12, 72);
-            doc.text(`Father's Name: ${data["Father's Name"] || 'N/A'}`, 12, 79);
-            doc.text(`Aadhaar Number: ${data["Aadhaar Number"] || 'N/A'}`, 12, 86);
+            // Sections
+            let y = 62; 
+            const groups = [
+                { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Aadhaar Number"] },
+                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which admitted"] },
+                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC"] }
+            ];
 
+            groups.forEach(g => {
+                doc.setFillColor(240); doc.rect(10, y, 190, 5, 'F');
+                doc.setFont("helvetica", "bold"); doc.text(g.t.toUpperCase(), 12, y + 3.8);
+                y += 8; 
+                g.k.forEach(k => {
+                    doc.setFont("helvetica", "bold"); doc.text(k + ":", 12, y);
+                    doc.setFont("helvetica", "normal"); doc.text(String(data[k] || "N/A"), 55, y);
+                    doc.setDrawColor(200); doc.line(10, y+1.5, 200, y+1.5);
+                    y += 7.5;
+                });
+                y += 3;
+            });
+
+            // Signatures
+            await loadImg(data["Signature"], 12, 268, 30, 10);
             doc.line(10, 280, 55, 280); doc.text("Student Signature", 15, 284);
-            
-            document.getElementById('msg').style.display = "none";
-            
-            // Save Dialog Box Open
-            doc.save(`Admission_${data["Name of Student"]}.pdf`);
-        }, 1500);
+            doc.line(160, 280, 200, 280); doc.text("Principal", 170, 284);
+
+            // Save Dialog
+            doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
+        }, 1200);
     }
 </script>
 </body>
