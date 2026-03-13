@@ -36,7 +36,6 @@
 
     <form id="admissionForm">
         <div id="dynamicFields" class="grid"></div>
-        
         <div class="uploads">
             <div class="field">
                 <label id="photoLabel">Photo</label>
@@ -49,7 +48,6 @@
                 <div id="s-pre" class="preview" style="margin-top:5px; width:180px; height:50px;">SIGNATURE</div>
             </div>
         </div>
-
         <div class="declaration-box">
             <b>DECLARATION:</b><br>
             1. I solemnly undertake to accept and abide by the rules of the school.<br>
@@ -59,7 +57,6 @@
                 I agree to the above declaration.
             </label>
         </div>
-
         <button type="button" id="submitBtn" class="btn-main" onclick="openPre()" disabled>PREVIEW & SUBMIT</button>
     </form>
 </div>
@@ -68,6 +65,7 @@
     <div class="modal-body">
         <h3 style="text-align:center;">PREVIEW</h3>
         <div id="preContent"></div>
+        <div id="qrHidden" style="display:none;"></div>
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button onclick="document.getElementById('modal').style.display='none'" style="flex:1; padding:10px;">Edit</button>
             <button id="fBtn" onclick="sendData()" style="flex:2; padding:10px; background:var(--p); color:white; border:none; cursor:pointer;">FINAL SUBMIT & PRINT</button>
@@ -76,7 +74,7 @@
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwoPQTTMbHzNf9l6GrovN8vc7V8Ld0BWPyEQn2vVZqKDqjcUxXcP9gFb95ucxJa7Sl_/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
     let imgs = { p: "", s: "" };
     let globalHeaders = [];
 
@@ -88,7 +86,9 @@
             let n = 1;
             globalHeaders.forEach(h => {
                 const head = h.trim();
-                if(head && !["Photo of Student", "Photo of Students", "Signature", "Application No"].includes(head)) {
+                // Yahan hidden fields ko filter kar rahe hain
+                const hiddenFields = ["Photo of Student", "Photo of Students", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
+                if(head && !hiddenFields.includes(head)) {
                     let type = head.toLowerCase().includes('date') ? 'date' : 'text';
                     div.innerHTML += `<div class="field"><label>${n}. ${head}</label><input type="${type}" name="${head}"></div>`;
                     n++;
@@ -119,17 +119,20 @@
     async function sendData() {
         const b = document.getElementById('fBtn'); b.innerText = "Processing..."; b.disabled = true;
         const d = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
-        d.photoData = imgs.p; d.sigData = imgs.s;
+        d.photoData = imgs.p; 
+        d.sigData = imgs.s;
+        
         try {
             const res = await fetch(scriptURL, { method: 'POST', body: JSON.stringify(d) });
             const r = await res.json();
             if(r.status === "Success") {
+                // Mapping data from response for PDF
                 d.FinalAppNo = r.appNo;
+                d.FinalSNo = r.sNo;
+                d.AdmissionDate = new Date().toLocaleDateString('en-GB'); // DD/MM/YYYY
                 printAMU(d);
-                alert("Success! ID: " + d.FinalAppNo);
-                location.reload();
             }
-        } catch(e) { alert("Error!"); b.disabled = false; }
+        } catch(e) { alert("Error!"); b.disabled = false; b.innerText = "FINAL SUBMIT & PRINT"; }
     }
 
     function printAMU(data) {
@@ -137,11 +140,10 @@
         const doc = new jsPDF('p', 'mm', 'a4');
         doc.rect(5, 5, 200, 287);
         
-        // Header Details
         doc.setFontSize(8); doc.setFont("helvetica", "bold");
         doc.text("Application Number: " + (data.FinalAppNo || ""), 10, 12);
-        doc.text("Serial No of Admission: " + (data["Serial no. of Admission"] || ""), 10, 16);
-        doc.text("Date of Admission: " + (data["Date of Admission"] || ""), 10, 20);
+        doc.text("Serial No of Admission: " + (data.FinalSNo || ""), 10, 16);
+        doc.text("Date of Admission: " + (data.AdmissionDate || ""), 10, 20);
 
         doc.setFontSize(13); doc.setTextColor(150, 0, 0);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
@@ -152,12 +154,13 @@
 
         if(imgs.p) { doc.addImage(imgs.p, 'JPEG', 165, 10, 30, 38); doc.rect(165, 10, 30, 38); }
 
-        const qrDiv = document.createElement('div');
+        const qrDiv = document.getElementById('qrHidden');
+        qrDiv.innerHTML = "";
         new QRCode(qrDiv, { text: String(data.FinalAppNo), width: 100, height: 100 });
         
         setTimeout(() => {
             const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20); 
+            if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20); 
 
             let y = 62;
             const groups = [
@@ -172,14 +175,10 @@
                 doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 5, 'F');
                 doc.setFont("helvetica", "bold"); doc.text(g.t.toUpperCase(), 12, y + 3.8);
                 y += 6;
-
-                // GRID/TABLE FORM (Two Columns)
                 for (let i = 0; i < g.k.length; i += 2) {
                     let k1 = g.k[i], k2 = g.k[i+1];
-                    // Col 1
                     doc.setFont("helvetica", "bold"); doc.text(k1 + ":", 12, y);
                     doc.setFont("helvetica", "normal"); doc.text(String(data[k1] || "N/A"), 45, y);
-                    // Col 2
                     if(k2) {
                         doc.setFont("helvetica", "bold"); doc.text(k2 + ":", 105, y);
                         doc.setFont("helvetica", "normal"); doc.text(String(data[k2] || "N/A"), 140, y);
@@ -190,25 +189,6 @@
                 y += 2;
             });
 
-            // Additional Info in Grid
-            let usedK = groups.flatMap(g => g.k).concat(["Photo of Student", "Signature", "Application No", "Serial no. of Admission", "Date of Admission"]);
-            let extraK = globalHeaders.filter(h => !usedK.includes(h.trim()) && h.trim() !== "");
-            if(extraK.length > 0) {
-                doc.setFillColor(245, 245, 245); doc.rect(10, y, 190, 5, 'F');
-                doc.setFont("helvetica", "bold"); doc.text("OTHER INFORMATION", 12, y + 3.8); y += 6;
-                for (let i = 0; i < extraK.length; i += 2) {
-                    let k1 = extraK[i], k2 = extraK[i+1];
-                    doc.setFont("helvetica", "bold"); doc.text(k1.trim() + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(data[k1.trim()] || "N/A"), 45, y);
-                    if(k2) {
-                        doc.setFont("helvetica", "bold"); doc.text(k2.trim() + ":", 105, y);
-                        doc.setFont("helvetica", "normal"); doc.text(String(data[k2.trim()] || "N/A"), 140, y);
-                    }
-                    doc.line(10, y+1.5, 200, y+1.5); y += 6.5;
-                }
-            }
-
-            // Declaration & Signatures
             y = 262;
             doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
             doc.setFont("helvetica", "normal");
@@ -220,8 +200,11 @@
             doc.line(77, y, 122, y); doc.text("Guardian's Signature", 82, y + 3.5);
             doc.line(145, y, 190, y); doc.text("Principal's Signature", 150, y + 3.5);
 
-            doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
-        }, 600);
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+            window.open(url, '_blank');
+            location.reload();
+        }, 800);
     }
 </script>
 </body>
