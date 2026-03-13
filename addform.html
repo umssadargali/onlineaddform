@@ -18,14 +18,13 @@
         .ac-title { background: #000; color: #fff; display: inline-block; padding: 4px 20px; font-weight: bold; margin-top: 10px; font-size: 14px; }
         
         .info-row { display: flex; justify-content: space-between; margin-top: 20px; align-items: flex-start; }
-        .photo-box { width: 95px; height: 115px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fdfdfd; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-box { width: 100px; height: 120px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; }
         
         .ac-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .ac-table td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+        .ac-table td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
         .lbl { background: #f8f8f8; font-weight: bold; width: 35%; }
         
-        .signs { display: flex; justify-content: space-between; margin-top: 45px; font-size: 12px; text-align: center; }
+        .signs { display: flex; justify-content: space-between; margin-top: 50px; font-size: 12px; text-align: center; }
 
         @media print {
             body { background: white; padding: 0; }
@@ -54,7 +53,6 @@
 </div>
 
 <script>
-    // Naya URL jo aapne diya
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
     async function findStudent() {
@@ -86,10 +84,23 @@
     function renderAdmitCard(student) {
         const container = document.getElementById('cardContent');
         
-        // SAFE FETCHING: Agar naam se nahi mila, toh column ki position se data uthayega
+        // Dynamic detection of image columns
+        let photoData = "";
+        let signData = "";
+        
+        // Loop through keys to find columns containing base64 image data
+        Object.keys(student).forEach(key => {
+            const val = String(student[key]);
+            if (val.startsWith("data:image")) {
+                if (key.toLowerCase().includes("photo")) photoData = val;
+                else if (key.toLowerCase().includes("signature") || key.toLowerCase().includes("sign")) signData = val;
+            }
+        });
+
+        // Fallback to index if name detection fails
         const keys = Object.keys(student);
-        const photo = student["Photo of Student"] || student[keys[20]] || ""; 
-        const signature = student["Signature"] || student[keys[21]] || "";
+        if(!photoData) photoData = student[keys[20]] || student["Photo of Student"];
+        if(!signData) signData = student[keys[21]] || student["Signature"];
 
         container.innerHTML = `
             <div class="ac-header">
@@ -102,14 +113,15 @@
                 <div style="font-size:13px; line-height:1.9;">
                     <b>Application No:</b> ${student["Application No"] || 'N/A'}<br>
                     <b>Roll Number:</b> ${student["Serial No. of Admission"] || 'N/A'}<br>
-                    <b>Exam Date:</b> 25-03-2026
+                    <b>Exam Date:</b> 25-03-2026<br>
+                    <b>Reporting Time:</b> 09:30 AM
                 </div>
                 <div style="text-align:center;">
-                    <div class="photo-box" id="pBox">
-                        <img id="pImg" src="${photo}" style="display:${photo?'block':'none'}; width:100%; height:100%; object-fit:cover;">
-                        ${!photo ? '<small>PHOTO</small>' : ''}
+                    <div class="photo-box">
+                        <img id="finalPhoto" style="width:100%; height:100%; object-fit:cover; display:none;">
+                        <span id="photoPlaceholder" style="font-size:10px; color:#999;">NO PHOTO</span>
                     </div>
-                    <div id="ac_qr" style="margin-top:8px; display:flex; justify-content:center;"></div>
+                    <div id="ac_qr" style="margin-top:10px; display:flex; justify-content:center;"></div>
                 </div>
             </div>
 
@@ -117,26 +129,43 @@
                 <tr><td class="lbl">Candidate Name</td><td>${student["Name of Student"] || ''}</td></tr>
                 <tr><td class="lbl">Father's Name</td><td>${student["Father's Name"] || ''}</td></tr>
                 <tr><td class="lbl">Class Applied</td><td>${student["Class in which admitted"] || ''}</td></tr>
+                <tr><td class="lbl">Test Centre</td><td>IQRA PUBLIC SCHOOL, BARSOI</td></tr>
             </table>
 
-            <div class="signs" style="margin-top:60px;">
-                <div style="width: 150px;">
+            <div class="signs" style="margin-top:50px;">
+                <div style="width: 160px;">
                     <div style="height:40px; display:flex; align-items:flex-end; justify-content:center;">
-                        <img id="sImg" src="${signature}" style="display:${signature?'block':'none'}; max-width:120px; max-height:40px;">
+                        <img id="finalSign" style="max-width:130px; max-height:40px; display:none;">
                     </div>
-                    <div style="border-top:1.5px solid #000; padding-top:5px;">Candidate Signature</div>
+                    <div style="border-top:1.5px solid #000; padding-top:5px; font-weight:bold;">Candidate Signature</div>
                 </div>
-                <div style="width: 150px;">
+                <div style="width: 160px;">
                     <div style="height:40px;"></div>
-                    <div style="border-top:1.5px solid #000; padding-top:5px;">Controller of Exams</div>
+                    <div style="border-top:1.5px solid #000; padding-top:5px; font-weight:bold;">Controller of Exams</div>
                 </div>
             </div>
         `;
 
+        // Image loading with verification logic
+        if(photoData && photoData.startsWith("data:image")) {
+            const pImg = document.getElementById('finalPhoto');
+            pImg.src = photoData;
+            pImg.onload = () => { 
+                pImg.style.display = 'block';
+                document.getElementById('photoPlaceholder').style.display = 'none';
+            };
+        }
+
+        if(signData && signData.startsWith("data:image")) {
+            const sImg = document.getElementById('finalSign');
+            sImg.src = signData;
+            sImg.onload = () => { sImg.style.display = 'block'; };
+        }
+
         // QR Code
         new QRCode(document.getElementById("ac_qr"), {
             text: student["Application No"] || "N/A",
-            width: 50, height: 50
+            width: 55, height: 55
         });
     }
 </script>
