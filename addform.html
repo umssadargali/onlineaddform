@@ -43,11 +43,10 @@
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwoPQTTMbHzNf9l6GrovN8vc7V8Ld0BWPyEQn2vVZqKDqjcUxXcP9gFb95ucxJa7Sl_/exec';
 
-    // 1. DATE FIX FUNCTION: Timestamp ko saaf karne ke liye
     function formatDate(val) {
         if (!val) return "N/A";
         if (typeof val === 'string' && val.includes('T')) {
-            return val.split('T')[0]; // Sirf 2015-03-11 rakhega
+            return val.split('T')[0];
         }
         return val;
     }
@@ -94,12 +93,17 @@
         doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
         doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
 
-        // Photo Handling
+        // --- PHOTO SECTION ---
         const photoData = data["Photo of Student"] || data["Photo of Students"];
-        if(photoData && photoData.startsWith("data:image")) {
+        console.log("Photo Data Received:", photoData); 
+
+        if (photoData && String(photoData).startsWith("data:image")) {
             doc.addImage(photoData, 'JPEG', 165, 10, 30, 38);
+        } else {
+            doc.rect(165, 10, 30, 38); 
+            doc.setFontSize(7);
+            doc.text("PHOTO NOT FOUND", 180, 25, {align:'center'});
         }
-        doc.rect(165, 10, 30, 38);
 
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
@@ -124,7 +128,6 @@
 
                 for (let i = 0; i < g.k.length; i += 2) {
                     let k1 = g.k[i], k2 = g.k[i+1];
-                    // Clean Date for display
                     let val1 = (k1.includes("Date")) ? formatDate(data[k1]) : (data[k1] || "N/A");
                     let val2 = (k2 && k2.includes("Date")) ? formatDate(data[k2]) : (data[k2] || "N/A");
 
@@ -146,10 +149,13 @@
             doc.setFont("helvetica", "normal");
             doc.text("I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.", 10, y + 3);
 
+            // --- SIGNATURE SECTION ---
             y = 280; 
             const sigData = data["Signature"];
-            if(sigData && sigData.startsWith("data:image")) {
-                doc.addImage(sigData, 'JPEG', 10, y-10, 25, 7);
+            console.log("Signature Data Received:", sigData);
+
+            if (sigData && String(sigData).startsWith("data:image")) {
+                doc.addImage(sigData, 'JPEG', 15, y - 12, 25, 8);
             }
             
             doc.line(10, y, 55, y); doc.text("Student Signature", 15, y + 3.5);
