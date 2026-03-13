@@ -1,170 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>IPS - Search Admission</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Admit Card - IQRA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: 'Arial', sans-serif; background: var(--bg); padding: 20px; text-align: center; }
-        .box { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid var(--p); }
-        .highlight { background: #d4af37; color: white; padding: 8px; font-weight: bold; margin: 15px 0; border-radius: 4px; display: inline-block; width: 90%; }
-        .input-group { text-align: left; margin-bottom: 12px; }
-        label { font-size: 12px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn { background: var(--p); color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .no-print { max-width: 500px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #1a5d1a; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; text-align: center; }
+        .btn-search { background: #1a5d1a; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        
+        /* Admit Card Container */
+        #admitCardArea { display: none; margin-top: 20px; }
+        .admit-card { width: 148mm; min-height: 210mm; padding: 10mm; margin: auto; background: white; border: 1.5px solid #000; box-sizing: border-box; position: relative; }
+        
+        /* AMU Style Header */
+        .ac-header { text-align: center; border-bottom: 2px solid #b71c1c; padding-bottom: 10px; }
+        .ac-title { background: #000; color: #fff; display: inline-block; padding: 4px 20px; font-weight: bold; margin-top: 10px; font-size: 14px; letter-spacing: 1px; }
+        
+        .info-row { display: flex; justify-content: space-between; margin-top: 20px; align-items: flex-start; }
+        .photo-box { width: 95px; height: 115px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fdfdfd; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .ac-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .ac-table td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
+        .lbl { background: #f8f8f8; font-weight: bold; width: 35%; color: #333; }
+        
+        .inst { border: 1px dashed #555; padding: 10px; font-size: 11px; margin-top: 20px; line-height: 1.5; color: #222; }
+        
+        /* Signature Area */
+        .signs { display: flex; justify-content: space-between; margin-top: 45px; font-size: 12px; text-align: center; }
+        .sign-img { max-width: 130px; max-height: 45px; display: block; margin: 0 auto 5px auto; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none; }
+            #admitCardArea { display: block !important; margin: 0; }
+            .admit-card { border: 2px solid #000; width: 100%; height: auto; margin: 0; }
+        }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2 style="color:var(--p); margin:0;">IQRA PUBLIC SCHOOL</h2>
-    <p style="font-size:13px; margin:5px 0;">Mathurapur, Barsoi, Katihar</p>
-    <div class="highlight">SEARCH ADMISSION FORM</div>
+<div class="no-print">
+    <h2 style="color: #1a5d1a; margin-bottom: 5px;">IQRA PUBLIC SCHOOL</h2>
+    <p style="font-size: 14px; color: #666;">Enter Details to Get Your Hall Ticket</p>
+    <input type="text" id="sName" placeholder="Candidate's Full Name">
+    <input type="text" id="sAadhar" placeholder="Aadhaar Number">
+    <button class="btn-search" id="searchBtn" onclick="findStudent()">GENERATE ADMIT CARD</button>
+</div>
 
-    <div class="input-group">
-        <label>Student Full Name</label>
-        <input type="text" id="sName" placeholder="Enter full name">
+<div id="admitCardArea">
+    <div class="admit-card" id="cardContent">
+        </div>
+    
+    <div style="text-align: center; margin: 25px 0;" class="no-print">
+        <button class="btn-search" style="width: 200px;" onclick="window.print()">PRINT / SAVE PDF</button>
+        <button class="btn-search" style="width: 150px; background: #666; margin-left: 10px;" onclick="location.reload()">NEW SEARCH</button>
     </div>
-    <div class="input-group">
-        <label>Date of Birth</label>
-        <input type="date" id="sDob">
-    </div>
-    <div style="margin:10px 0; color:#888; font-size:12px;">— OR —</div>
-    <div class="input-group">
-        <label>Aadhaar Number</label>
-        <input type="number" id="sAadhar" placeholder="12 digit Aadhaar">
-    </div>
-
-    <button class="btn" onclick="search()">SEARCH & DOWNLOAD PDF</button>
-    <p id="msg" style="display:none; color:var(--p); font-weight:bold;">Searching in Database...</p>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwoPQTTMbHzNf9l6GrovN8vc7V8Ld0BWPyEQn2vVZqKDqjcUxXcP9gFb95ucxJa7Sl_/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
-    function formatDate(val) {
-        if (!val) return "N/A";
-        if (typeof val === 'string' && val.includes('T')) {
-            return val.split('T')[0];
+    async function findStudent() {
+        const name = document.getElementById('sName').value.trim();
+        const aadhar = document.getElementById('sAadhar').value.trim();
+        const btn = document.getElementById('searchBtn');
+        
+        if(!name || !aadhar) {
+            alert("Please enter both Name and Aadhaar Number.");
+            return;
         }
-        return val;
-    }
 
-    async function search() {
-        const name = document.getElementById('sName').value;
-        const dob = document.getElementById('sDob').value;
-        const aadhar = document.getElementById('sAadhar').value;
-        const msg = document.getElementById('msg');
+        btn.innerText = "Searching Database...";
+        btn.disabled = true;
 
-        if(!name || (!dob && !aadhar)) return alert("Please fill Name and either DOB or Aadhaar");
-
-        msg.style.display = "block";
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchDOB=${dob}&searchAadhar=${aadhar}`);
-            const data = await res.json();
-            msg.style.display = "none";
+            // Using doGet for search as defined in your Google Script
+            const response = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${encodeURIComponent(aadhar)}`);
+            const student = await response.json();
 
-            if(data === "Not Found") {
-                alert("No record found.");
+            if(student === "Not Found") {
+                alert("No record found. Please verify the Name and Aadhaar Number.");
+                btn.innerText = "GENERATE ADMIT CARD";
+                btn.disabled = false;
             } else {
-                printAMUGrid(data);
+                renderAdmitCard(student);
+                document.querySelector('.no-print').style.display = 'none';
+                document.getElementById('admitCardArea').style.display = 'block';
             }
         } catch(e) {
-            msg.style.display = "none";
-            alert("Connection Error!");
+            alert("Connection Error. Please try again.");
+            btn.innerText = "GENERATE ADMIT CARD";
+            btn.disabled = false;
         }
     }
 
-    function printAMUGrid(data) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        doc.rect(5, 5, 200, 287);
+    function renderAdmitCard(student) {
+        const container = document.getElementById('cardContent');
         
-        doc.setFontSize(8); doc.setFont("helvetica", "bold");
-        doc.text("Application Number: " + (data["Application No"] || "N/A"), 10, 12);
-        doc.text("Serial No of Admission: " + (data["Serial no. of Admission"] || ""), 10, 16);
-        doc.text("Date of Admission: " + formatDate(data["Date of Admission"]), 10, 20);
+        // Handling Photo & Signature
+        const photo = student["Photo of Student"] || "";
+        const signature = student["Signature"] || "";
 
-        doc.setFontSize(13); doc.setTextColor(150, 0, 0);
-        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
-        doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("Session : 2026-27", 105, 20, {align:'center'});
-        doc.text("Application Form for admission to Class IX", 105, 25, {align:'center'});
-        doc.text("IQRA PUBLIC SCHOOL", 105, 30, {align:'center'});
+        container.innerHTML = `
+            <div class="ac-header">
+                <h2 style="margin:0; color:#b71c1c; font-size: 22px;">ALIGARH MUSLIM UNIVERSITY</h2>
+                <h3 style="margin:5px 0; color:#333;">IQRA PUBLIC SCHOOL</h3>
+                <p style="margin:0; font-size:12px;">Session 2026-27 | Admission Test</p>
+                <div class="ac-title">HALL TICKET / ADMIT CARD</div>
+            </div>
 
-        // --- PHOTO SECTION ---
-        const photoData = data["Photo of Student"] || data["Photo of Students"];
-        console.log("Photo Data Received:", photoData); 
+            <div class="info-row">
+                <div style="font-size:13px; line-height:1.9;">
+                    <b>Application No:</b> ${student["Application No"] || 'N/A'}<br>
+                    <b>Roll Number:</b> ${student["Serial No. of Admission"] || 'N/A'}<br>
+                    <b>Date of Exam:</b> 25-03-2026<br>
+                    <b>Reporting Time:</b> 09:30 AM
+                </div>
+                <div style="text-align:center;">
+                    <div class="photo-box">
+                        ${photo ? `<img src="${photo}">` : '<span style="font-size:10px;color:#999;">PASTE PHOTO</span>'}
+                    </div>
+                    <div id="ac_qr" style="margin-top:8px; display:flex; justify-content:center;"></div>
+                </div>
+            </div>
 
-        if (photoData && String(photoData).startsWith("data:image")) {
-            doc.addImage(photoData, 'JPEG', 165, 10, 30, 38);
-        } else {
-            doc.rect(165, 10, 30, 38); 
-            doc.setFontSize(7);
-            doc.text("PHOTO NOT FOUND", 180, 25, {align:'center'});
-        }
+            <table class="ac-table">
+                <tr><td class="lbl">Candidate Name</td><td>${student["Name of Student"] || ''}</td></tr>
+                <tr><td class="lbl">Father's Name</td><td>${student["Father's Name"] || ''}</td></tr>
+                <tr><td class="lbl">Class Applied</td><td>${student["Class in which admitted"] || 'N/A'}</td></tr>
+                <tr><td class="lbl">Exam Centre</td><td>IQRA PUBLIC SCHOOL, MATHURAPUR, BARSOI</td></tr>
+            </table>
 
-        const qrDiv = document.createElement('div');
-        new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
-        
-        setTimeout(() => {
-            const qrCanvas = qrDiv.querySelector('canvas');
-            doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 35, 20, 20); 
+            <div class="inst">
+                <b>CANDIDATE INSTRUCTIONS:</b><br>
+                1. Entry without this Hall Ticket is strictly prohibited.<br>
+                2. Use only Blue/Black ballpoint pen for the entrance test.<br>
+                3. Electronic gadgets (mobiles, calculators) are not allowed inside.<br>
+                4. Maintain silence and discipline during the examination.
+            </div>
 
-            let y = 62; 
-            const groups = [
-                { t: "Personal Details", k: ["Name of Student", "Father's Name", "Mother's Name", "Date of Birth", "Caste", "Category"] },
-                { t: "Contact & Address", k: ["Mobile Number", "Permanent Residence", "Aadhaar Number"] },
-                { t: "Academic Details", k: ["Name & Place of Previous School", "Class in which reading", "Class in which admitted"] },
-                { t: "Bank Details", k: ["Bank Name", "Bank Account Number", "IFSC", "Account Holder's Name"] }
-            ];
+            <div class="signs">
+                <div style="width: 160px;">
+                    <div style="height:45px; display:flex; align-items:flex-end; justify-content:center;">
+                        ${signature ? `<img src="${signature}" class="sign-img">` : ''}
+                    </div>
+                    <div style="border-top:1.5px solid #000; padding-top:5px; font-weight:bold;">Candidate Signature</div>
+                </div>
+                <div style="width: 160px;">
+                    <div style="height:45px;"></div>
+                    <div style="border-top:1.5px solid #000; padding-top:5px; font-weight:bold;">Controller of Exams</div>
+                </div>
+            </div>
+        `;
 
-            doc.setFontSize(8);
-            groups.forEach(g => {
-                doc.setFillColor(240, 240, 240); doc.rect(10, y, 190, 5, 'F');
-                doc.setFont("helvetica", "bold"); doc.text(g.t.toUpperCase(), 12, y + 3.8);
-                y += 7; 
-
-                for (let i = 0; i < g.k.length; i += 2) {
-                    let k1 = g.k[i], k2 = g.k[i+1];
-                    let val1 = (k1.includes("Date")) ? formatDate(data[k1]) : (data[k1] || "N/A");
-                    let val2 = (k2 && k2.includes("Date")) ? formatDate(data[k2]) : (data[k2] || "N/A");
-
-                    doc.setFont("helvetica", "bold"); doc.text(k1 + ":", 12, y);
-                    doc.setFont("helvetica", "normal"); doc.text(String(val1), 45, y);
-                    
-                    if(k2) {
-                        doc.setFont("helvetica", "bold"); doc.text(k2 + ":", 105, y);
-                        doc.setFont("helvetica", "normal"); doc.text(String(val2), 140, y);
-                    }
-                    doc.setDrawColor(200); doc.line(10, y+1.5, 200, y+1.5);
-                    y += 7.5; 
-                }
-                y += 3; 
-            });
-
-            y = 262; 
-            doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-            doc.setFont("helvetica", "normal");
-            doc.text("I solemnly undertake to accept and abide by the rules of the school. I hereby affirm that the entries made above are true to the best of my knowledge.", 10, y + 3);
-
-            // --- SIGNATURE SECTION ---
-            y = 280; 
-            const sigData = data["Signature"];
-            console.log("Signature Data Received:", sigData);
-
-            if (sigData && String(sigData).startsWith("data:image")) {
-                doc.addImage(sigData, 'JPEG', 15, y - 12, 25, 8);
-            }
-            
-            doc.line(10, y, 55, y); doc.text("Student Signature", 15, y + 3.5);
-            doc.line(77, y, 122, y); doc.text("Guardian's Signature", 82, y + 3.5);
-            doc.line(145, y, 190, y); doc.text("Principal's Signature", 150, y + 3.5);
-
-            doc.save("Search_Admission_" + (data["Name of Student"] || "Form") + ".pdf");
-        }, 800);
+        // Generate QR Code
+        new QRCode(document.getElementById("ac_qr"), {
+            text: student["Application No"] || "N/A",
+            width: 55,
+            height: 55,
+            colorDark : "#000000",
+            colorLight : "#ffffff"
+        });
     }
 </script>
+
 </body>
 </html>
