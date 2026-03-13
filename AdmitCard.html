@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Admit Card - IQRA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .search-box { max-width: 500px; margin: 20px auto; background: white; padding: 25px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #1a5d1a; }
+        input { width: 80%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; text-align: center; }
+        .btn-search { background: #1a5d1a; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        /* Admit Card Styling (A5 Size roughly) */
+        #admitCardArea { display: none; margin-top: 30px; }
+        .admit-card { width: 148mm; min-height: 210mm; padding: 10mm; margin: auto; background: white; border: 2px solid #000; box-sizing: border-box; position: relative; }
+        
+        .ac-header { text-align: center; border-bottom: 2px solid #b71c1c; padding-bottom: 10px; }
+        .ac-title { background: #000; color: #fff; display: inline-block; padding: 3px 20px; font-weight: bold; margin-top: 10px; font-size: 14px; }
+        
+        .info-row { display: flex; justify-content: space-between; margin-top: 20px; }
+        .photo-box { width: 90px; height: 110px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .ac-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .ac-table td { border: 1px solid #ddd; padding: 10px; font-size: 14px; }
+        .lbl { background: #f5f5f5; font-weight: bold; width: 35%; }
+        
+        .inst { border: 1px dashed #444; padding: 10px; font-size: 11px; margin-top: 20px; line-height: 1.5; }
+        .signs { display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px; text-align: center; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #admitCardArea, #admitCardArea * { visibility: visible; }
+            #admitCardArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="search-box no-print">
+    <h3>IQRA PUBLIC SCHOOL</h3>
+    <p>Enter Student Name & Aadhaar to Download Admit Card</p>
+    <input type="text" id="sName" placeholder="Student Name (Full Name)">
+    <input type="text" id="sAadhar" placeholder="Aadhaar Number">
+    <br>
+    <button class="btn-search" onclick="findStudent()">SEARCH ADMIT CARD</button>
+</div>
+
+<div id="admitCardArea">
+    <div class="admit-card" id="cardContent">
+        </div>
+    <div style="text-align: center; margin-top: 20px;" class="no-print">
+        <button class="btn-search" onclick="window.print()">PRINT ADMIT CARD</button>
+        <button class="btn-search" style="background:#666;" onclick="location.reload()">BACK</button>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
+
+    async function findStudent() {
+        const name = document.getElementById('sName').value;
+        const aadhar = document.getElementById('sAadhar').value;
+        
+        if(!name || !aadhar) return alert("Please fill both fields");
+
+        const btn = document.querySelector('.btn-search');
+        btn.innerText = "Searching..."; btn.disabled = true;
+
+        try {
+            // Hum doGet ka use karke search karenge
+            const response = await fetch(`${scriptURL}?searchName=${name}&searchAadhar=${aadhar}`);
+            const data = await response.json();
+
+            if(data === "Not Found") {
+                alert("No record found! Please check Name and Aadhaar.");
+            } else {
+                renderAdmitCard(data);
+                document.querySelector('.search-box').style.display = 'none';
+                document.getElementById('admitCardArea').style.display = 'block';
+            }
+        } catch(e) { alert("Error connecting to server"); }
+        btn.innerText = "SEARCH ADMIT CARD"; btn.disabled = false;
+    }
+
+    function renderAdmitCard(student) {
+        const card = document.getElementById('cardContent');
+        card.innerHTML = `
+            <div class="ac-header">
+                <h2 style="margin:0; color:#b71c1c;">ALIGARH MUSLIM UNIVERSITY</h2>
+                <h4 style="margin:5px 0;">IQRA PUBLIC SCHOOL</h4>
+                <small>Session 2026-27 | Admission Test</small><br>
+                <div class="ac-title">HALL TICKET / ADMIT CARD</div>
+            </div>
+
+            <div class="info-row">
+                <div style="font-size:13px; line-height:1.8;">
+                    <b>Application No:</b> ${student["Application No"] || 'N/A'}<br>
+                    <b>Roll No:</b> ${student["Serial No. of Admission"] || 'N/A'}<br>
+                    <b>Exam Date:</b> 25-03-2026<br>
+                    <b>Reporting Time:</b> 09:30 AM
+                </div>
+                <div style="text-align:center;">
+                    <div class="photo-box">
+                        <img src="${student["Photo of Student"] || ''}" onerror="this.src='https://via.placeholder.com/90x110?text=PHOTO'">
+                    </div>
+                    <div id="ac_qr" style="margin-top:10px; display:flex; justify-content:center;"></div>
+                </div>
+            </div>
+
+            <table class="ac-table">
+                <tr><td class="lbl">Candidate Name</td><td>${student["Name of Student"] || ''}</td></tr>
+                <tr><td class="lbl">Father's Name</td><td>${student["Father's Name"] || ''}</td></tr>
+                <tr><td class="lbl">Class Applied</td><td>${student["Class in which admitted"] || 'N/A'}</td></tr>
+                <tr><td class="lbl">Test Centre</td><td>IQRA PUBLIC SCHOOL, BARSOI</td></tr>
+            </table>
+
+            <div class="inst">
+                <b>IMPORTANT INSTRUCTIONS:</b><br>
+                1. This Admit Card is mandatory for entry into the exam hall.<br>
+                2. Use of mobile phones, smartwatches, or calculators is strictly prohibited.<br>
+                3. Candidates must reach the centre 30 minutes before the exam starts.<br>
+                4. Please bring your own blue/black ballpoint pen.
+            </div>
+
+            <div class="signs">
+                <div>
+                    <img src="${student["Signature"] || ''}" style="width:100px; height:30px;"><br>
+                    ___________________<br>Candidate's Signature
+                </div>
+                <div>
+                    <br><br>
+                    ___________________<br>Controller of Exams
+                </div>
+            </div>
+        `;
+        // QR Code generate karein
+        new QRCode(document.getElementById("ac_qr"), { text: student["Application No"], width: 60, height: 60 });
+    }
+</script>
+
+</body>
+</html>
