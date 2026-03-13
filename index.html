@@ -62,7 +62,7 @@
             1. I solemnly undertake to accept and abide by the rules of the school.<br>
             2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
             3. If at any time, the entries are found incorrect, the admission may be cancelled.<br>
-            <label style="display:block; margin-top:8px; font-weight:bold; color:var(--p);"><input type="checkbox" onchange="document.getElementById('subBtn').disabled = !this.checked"> I agree to the above declaration.</label>
+            <label style="display:block; margin-top:8px; font-weight:bold; color:var(--p);"><input type="checkbox" onchange="document.getElementById('subBtn').disabled = !this.checked"> I agree to the declaration.</label>
         </div>
         
         <button type="button" id="subBtn" class="btn-main" onclick="openPre()" disabled>PREVIEW & SUBMIT</button>
@@ -90,7 +90,8 @@
         let count = 1;
         headers.forEach(h => {
             if(h && !skip.includes(h.trim())) {
-                const isDate = h.includes('Date') || h.includes('T.C');
+                // FIXED: Date format logic - T.C No. ab text rahega
+                const isDate = h.includes('Date') && !h.includes('No');
                 div.innerHTML += `<div class="field"><label>${count}. ${h.trim()}</label><input type="${isDate?'date':'text'}" name="${h.trim()}"></div>`;
                 count++;
             }
@@ -138,7 +139,7 @@
 
             <div class="section-bar">CONTACT & ADDRESS</div>
             <table class="p-table">
-                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Residence"] || ''}</td></tr>
+                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Permanent Residence"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">ACADEMIC DETAILS</div>
@@ -155,7 +156,14 @@
                 <tr><td class="sh">Account No</td><td>${d["Bank Account Number"] || ''}</td><td class="sh">IFSC Code</td><td>${d["IFSC"] || ''}</td></tr>
             </table>
 
-            <div style="margin-top:60px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
+            <div style="font-size:10.5px; margin: 15px 0; line-height:1.4; border-top:1px solid #eee; padding-top:10px;">
+                <b>DECLARATION:</b><br>
+                1. I solemnly undertake to accept and abide by the rules of the school.<br>
+                2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
+                3. If at any time, the entries are found incorrect, the admission may be cancelled.
+            </div>
+
+            <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
                 <div>${imgs.s ? `<img src="${imgs.s}" style="width:100px; height:35px;">` : ''}<br>_________________<br>Student Signature</div>
                 <div><br><br>_________________<br>Guardian's Signature</div>
                 <div><br><br>_________________<br>Principal's Signature</div>
@@ -175,7 +183,7 @@
                 renderPrint({appNo: r.appNo, sNo: r.sNo});
                 b.style.display = "none";
                 document.getElementById('pBtn').style.display = "inline-block";
-                alert("Saved to Google Sheets!");
+                alert("Data Saved Successfully!");
             }
         } catch(e) { b.innerText = "FINAL SUBMIT"; b.disabled = false; alert("Error saving data"); }
     }
