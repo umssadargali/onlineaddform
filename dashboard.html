@@ -2,34 +2,29 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iqra Public School Student Records - Dashboard</title>
+    <title>IPS Student Records - Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; }
         .search-box { padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; width: 250px; outline: none; }
-        
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th { background: var(--p); color: white; padding: 12px; text-align: left; }
         td { padding: 10px; border-bottom: 1px solid #eee; }
-        
-        .btn-view { background: #b71c1c; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-right: 5px; }
-        .btn-edit { background: #1976d2; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; margin-right: 5px; }
-        .btn-delete { background: #d32f2f; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        
+        tr:hover { background: #f9f9f9; }
+        .btn-view { background: #b71c1c; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 12px; font-weight: bold; }
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px 0; }
-        .a4-card { background: white; width: 210mm; min-height: 297mm; padding: 12mm; margin: auto; box-sizing: border-box; border: 1px solid #000; color: #000; }
+        .a4-card { background: white; width: 210mm; min-height: 297mm; padding: 12mm; margin: auto; box-sizing: border-box; border: 1px solid #000; position: relative; }
+        .p-head { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; }
+        .p-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .p-table td { border: 1px solid #ccc; padding: 7px 10px; font-size: 12.5px; }
+        .sh { background: #f0f0f0; font-weight: bold; width: 22%; }
+        .section-bar { background: #e9e9e9; font-weight: bold; padding: 5px 10px; font-size: 13px; margin: 15px 0 5px 0; border: 1px solid #333; }
+        .declaration-box { font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid #eee; background: #fffcf0; }
         
-        .p-head { text-align: center; border-bottom: 2px solid #000; margin-bottom: 15px; }
-        .p-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .p-table td { border: 1px solid #aaa; padding: 6px 10px; font-size: 12px; }
-        .sh { background: #f2f2f2; font-weight: bold; width: 22%; }
-        .section-bar { background: #ddd; font-weight: bold; padding: 4px 10px; font-size: 12px; margin: 10px 0 5px 0; border: 1px solid #333; }
-        .decl-text { font-size: 10.5px; margin-top: 12px; line-height: 1.3; border-top: 1px solid #ccc; padding-top: 5px; }
-
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -45,21 +40,12 @@
         <h2 style="color:var(--p); margin:0;">IPS Student Records</h2>
         <input type="text" class="search-box" id="searchInput" onkeyup="filterTable()" placeholder="Student ka naam likhein...">
     </div>
-
     <div class="table-wrapper">
         <table id="studentTable">
             <thead>
-                <tr>
-                    <th>App No</th>
-                    <th>Student Name</th>
-                    <th>Father's Name</th>
-                    <th>Class</th>
-                    <th>Action</th>
-                </tr>
+                <tr><th>App No</th><th>Student Name</th><th>Father's Name</th><th>Class</th><th>Aadhaar</th><th>Action</th></tr>
             </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="5" style="text-align:center;">Data loading...</td></tr>
-            </tbody>
+            <tbody id="tableBody"><tr><td colspan="6" style="text-align:center;">Data loading...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -67,8 +53,8 @@
 <div id="modal">
     <div id="printArea" class="a4-card"></div>
     <div class="no-print" style="text-align: center; padding: 20px;">
-        <button onclick="window.print()" style="padding:10px 25px; background:black; color:white; border:none; cursor:pointer;">PRINT</button>
-        <button onclick="closeModal()" style="padding:10px 25px; background:#666; color:white; border:none; margin-left:10px; cursor:pointer;">CLOSE</button>
+        <button onclick="window.print()" style="padding:12px 30px; background:black; color:white; border:none; cursor:pointer; font-weight:bold; border-radius:4px;">PRINT / SAVE PDF</button>
+        <button onclick="closeModal()" style="padding:12px 30px; background:#666; color:white; border:none; margin-left:10px; cursor:pointer; border-radius:4px;">CLOSE</button>
     </div>
 </div>
 
@@ -82,13 +68,8 @@
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
-            if (Array.isArray(data)) {
-                allStudents = data;
-                renderTable(allStudents);
-            }
-        } catch (e) {
-            alert("Data load nahi ho paya!");
-        }
+            if (Array.isArray(data)) { allStudents = data; renderTable(allStudents); }
+        } catch (e) { document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Data error!</td></tr>'; }
     }
 
     function renderTable(data) {
@@ -96,19 +77,7 @@
         tbody.innerHTML = "";
         data.forEach((s, index) => {
             const appNo = s["Application No"] || s["Application Number"] || "Pending";
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${appNo}</b></td>
-                    <td>${s["Name of Student"] || 'N/A'}</td>
-                    <td>${s["Father's Name"] || 'N/A'}</td>
-                    <td>${s["Class in which admitted"] || 'N/A'}</td>
-                    <td>
-                        <button class="btn-view" onclick="viewStudent(${index})">VIEW</button>
-                        <button class="btn-edit" onclick="editStudent('${s["Aadhaar Number"]}')">EDIT</button>
-                        <button class="btn-delete" onclick="deleteStudent('${s["Aadhaar Number"]}', '${s["Name of Student"]}')">DEL</button>
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td>${s["Aadhaar Number"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td></tr>`;
         });
     }
 
@@ -118,7 +87,6 @@
         renderTable(filtered);
     }
 
-    // View Function
     async function viewStudent(index) {
         const s = allStudents[index];
         document.getElementById('modal').style.display = 'block';
@@ -131,23 +99,12 @@
         } catch(e) { renderPrint(s); }
     }
 
-    // Delete Function
-    async function deleteStudent(aadhar, name) {
-        if (confirm(`Kya aap sach mein ${name} ka record delete karna chahte hain?`)) {
-            try {
-                const res = await fetch(`${scriptURL}?deleteAadhar=${aadhar}`);
-                const result = await res.text();
-                alert("Record successfully delete ho gaya!");
-                fetchList(); // List refresh karein
-            } catch (e) { alert("Delete fail ho gaya!"); }
-        }
-    }
-
-    // Edit Function (Ye wahi form kholega jahan se entry hoti hai)
-    function editStudent(aadhar) {
-        // Aapka admission form wala link yahan aayega, aadhar ke saath
-        const formURL = "https://umssadargali.github.io/onlineaddform/" + aadhar;
-        window.open(formURL, "_blank");
+    // Google Drive Link ko bypass karne ke liye function
+    function fixDriveLink(url) {
+        if (!url) return '';
+        if (url.startsWith('data:image')) return url; // Already Base64
+        const id = url.match(/[-\w]{25,}/);
+        return id ? `https://lh3.googleusercontent.com/d/${id[0]}=s500` : url;
     }
 
     function renderPrint(d) {
@@ -157,20 +114,20 @@
         printArea.innerHTML = `
             <div class="p-head">
                 <h2 style="margin:0; color:#b71c1c;">ALIGARH MUSLIM UNIVERSITY</h2>
-                <h4 style="margin:2px 0;">Session : 2026-27</h4>
+                <h4 style="margin:5px 0;">Session : 2026-27</h4>
                 <h3 style="margin:0;">IQRA PUBLIC SCHOOL</h3>
-                <p style="font-weight:bold; margin:3px 0;">Application Form for Admission</p>
+                <p style="font-weight:bold; margin:5px 0;">Application Form for Admission</p>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                <div style="font-size:12px;">
-                    <b>Application No:</b> ${appNo}<br>
-                    <b>Serial No:</b> ${d["Serial No. of Admission"] || '---'}<br>
-                    <b>Date:</b> ${d["Date of Admission"] || '---'}
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="font-size:12px; line-height:1.8;">
+                    <b>Application Number:</b> ${appNo}<br>
+                    <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || '---'}<br>
+                    <b>Date of Admission:</b> ${d["Date of Admission"] || '---'}
                 </div>
                 <div id="qrPrint"></div>
-                <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden; background:#f0f0f0;">
-                    ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%; object-fit:cover;">` : '<div style="padding:40px 10px; font-size:10px; text-align:center;">NO PHOTO</div>'}
+                <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden;">
+                    <img src="${fixDriveLink(d["Photo of Student"])}" style="width:100%;height:100%; object-fit:cover;" onerror="this.style.display='none'">
                 </div>
             </div>
 
@@ -178,29 +135,42 @@
             <table class="p-table">
                 <tr><td class="sh">Student Name</td><td>${d['Name of Student'] || ''}</td><td class="sh">Father's Name</td><td>${d["Father's Name"] || ''}</td></tr>
                 <tr><td class="sh">Mother's Name</td><td>${d["Mother's Name"] || ''}</td><td class="sh">Date of Birth</td><td>${d["Date of Birth"] || ''}</td></tr>
-                <tr><td class="sh">Aadhaar No</td><td colspan="3">${d["Aadhaar Number"] || ''}</td></tr>
+                <tr><td class="sh">Caste</td><td>${d["Caste"] || ''}</td><td class="sh">Category</td><td>${d["Category"] || ''}</td></tr>
+                <tr><td class="sh">Aadhaar Number</td><td colspan="3">${d["Aadhaar Number"] || ''}</td></tr>
             </table>
 
-            <div class="section-bar">ACADEMIC & CONTACT</div>
+            <div class="section-bar">CONTACT & ADDRESS</div>
             <table class="p-table">
-                <tr><td class="sh">Mobile</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Residence"] || d["Residence"] || ''}</td></tr>
-                <tr><td class="sh">Prev School</td><td colspan="3">${d["Name & Place of Previous School"] || ''}</td></tr>
+                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Residence"] || d["Residence"] || ''}</td></tr>
             </table>
 
-            <div class="decl-text">
+            <div class="section-bar">ACADEMIC DETAILS</div>
+            <table class="p-table">
+                <tr><td class="sh">Previous School</td><td colspan="3">${d["Name & Place of Previous School"] || ''}</td></tr>
+                <tr><td class="sh">Reading Class</td><td>${d["Class in which reading"] || ''}</td><td class="sh">TC No</td><td>${d["T.C No."] || ''}</td></tr>
+                <tr><td class="sh">TC Date</td><td>${d["Date of T.C"] || ''}</td><td class="sh">Admitted Class</td><td>${d["Class in which admitted"] || ''}</td></tr>
+            </table>
+
+            <div class="section-bar">BANK DETAILS</div>
+            <table class="p-table">
+                <tr><td class="sh">Account Holder</td><td>${d["Account Holder's Name"] || ''}</td><td class="sh">Bank Name</td><td>${d["Bank Name"] || ''}</td></tr>
+                <tr><td class="sh">Account No</td><td>${d["Bank Account Number"] || ''}</td><td class="sh">IFSC Code</td><td>${d["IFSC"] || ''}</td></tr>
+            </table>
+
+            <div class="declaration-box">
                 <b>DECLARATION:</b><br>
                 1. I solemnly undertake to accept and abide by the rules of the school.<br>
                 2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
                 3. If at any time, the entries are found incorrect, the admission may be cancelled.
             </div>
 
-            <div style="margin-top:35px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
+            <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
                 <div style="width:130px;">
-                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:45px; object-fit:contain;">` : '<div style="height:45px;"></div>'}
+                    <img src="${fixDriveLink(d["Signature"])}" style="width:100%; height:40px; object-fit:contain;" onerror="this.style.display='none'">
                     <br>_________________<br>Student Signature
                 </div>
-                <div><br><br>_________________<br>Guardian's Signature</div>
-                <div><br><br>_________________<br>Principal's Signature</div>
+                <div><br><br>_________________<br>Guardian Signature</div>
+                <div><br><br>_________________<br>Principal Signature</div>
             </div>
         `;
         if(appNo !== "N/A") new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
