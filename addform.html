@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Student Management</title>
+    <title>IPS Admin - Admission Manager</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Dashboard */
         .admin-panel { max-width: 950px; margin: 10px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .search-row { display: flex; gap: 10px; margin-bottom: 20px; }
         input { flex: 1; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; outline: none; }
         .btn-search { background: var(--p); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         
-        .table-container { overflow-x: auto; }
+        .table-container { overflow-x: auto; max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: var(--p); color: white; padding: 12px; text-align: left; }
+        th { background: var(--p); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
         td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
         .btn-view { background: #b71c1c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
 
-        /* Admission Form (Hidden for UI, Visible for Print) */
+        /* Admission Form Styles */
         #admission-form { display: none; width: 210mm; min-height: 297mm; padding: 15mm; background: white; border: 1px solid #000; margin: 20px auto; position: relative; box-sizing: border-box; }
         .form-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .photo-box { position: absolute; top: 15mm; right: 15mm; width: 35mm; height: 45mm; border: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -46,7 +45,7 @@
     <div class="search-row">
         <input type="text" id="nameSearch" placeholder="Student Name">
         <input type="number" id="aadharSearch" placeholder="Aadhar Number">
-        <button class="btn-search" onclick="doSearch()">SEARCH RECORD</button>
+        <button class="btn-search" onclick="doSearch()">SEARCH</button>
     </div>
 
     <div class="table-container">
@@ -61,7 +60,7 @@
                 </tr>
             </thead>
             <tbody id="listBody">
-                <tr><td colspan="5" style="text-align:center; color:#888;">Naya data search karein...</td></tr>
+                <tr><td colspan="5" style="text-align:center;">Data load ho raha hai...</td></tr>
             </tbody>
         </table>
     </div>
@@ -75,7 +74,7 @@
         <div id="qrcode" style="display:flex; justify-content:center; margin-top:10px;"></div>
     </div>
 
-    <div class="photo-box"><img id="p-photo" src="" alt="Photo Loading..."></div>
+    <div class="photo-box"><img id="p-photo" src="" alt="Loading..."></div>
 
     <div class="section-bar">PERSONAL INFORMATION</div>
     <table class="data-grid">
@@ -103,57 +102,70 @@
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec'; // Apna URL yahan daalein
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec'; 
 
-    // Photo loading fix
-    function getCleanImg(url) {
-        if (!url) return "";
-        const id = url.match(/[-\w]{25,}/);
-        // Thumbnail proxy ka use kar rahe hain jo load hone mein fast aur stable hai
-        return id ? `https://drive.google.com/thumbnail?id=${id[0]}&sz=w500` : url;
+    let allEntries = []; 
+
+    // --- Page khulte hi puri list load karna ---
+    window.onload = async function() {
+        try {
+            const res = await fetch(SCRIPT_URL);
+            const data = await res.json();
+            if(Array.isArray(data)) {
+                allEntries = data;
+                renderTable(allEntries);
+            }
+        } catch(e) {
+            document.getElementById('listBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Data load nahi ho saka.</td></tr>';
+        }
+    };
+
+    function renderTable(dataArray) {
+        const tbody = document.getElementById('listBody');
+        tbody.innerHTML = '';
+        dataArray.forEach((item, index) => {
+            tbody.innerHTML += `<tr>
+                <td>${item["Application No"] || '-'}</td>
+                <td><b>${item["Name of Student"]}</b></td>
+                <td>${item["Father's Name"]}</td>
+                <td>${item["Class in which admitted"]}</td>
+                <td><button class="btn-view" onclick="showForm(${index})">VIEW</button></td>
+            </tr>`;
+        });
     }
-
-    let storedData = null;
 
     async function doSearch() {
         const n = document.getElementById('nameSearch').value;
         const a = document.getElementById('aadharSearch').value;
         if(!n || !a) return alert("Pura detail bhariye");
 
-        const list = document.getElementById('listBody');
-        list.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
-
+        document.getElementById('listBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
+        
         try {
-            const response = await fetch(`${SCRIPT_URL}?searchName=${encodeURIComponent(n)}&searchAadhar=${a}`);
-            const data = await response.json();
-
+            const res = await fetch(`${SCRIPT_URL}?searchName=${encodeURIComponent(n)}&searchAadhar=${a}`);
+            const data = await res.json();
             if(data === "Not Found") {
-                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Data nahi mila!</td></tr>';
-                return;
+                document.getElementById('listBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Nahi mila!</td></tr>';
+            } else {
+                allEntries = [data]; // Search result ko hi list bana do
+                renderTable(allEntries);
             }
-
-            storedData = data;
-            list.innerHTML = `<tr>
-                <td>${data["Application No"] || '-'}</td>
-                <td><b>${data["Name of Student"]}</b></td>
-                <td>${data["Father's Name"]}</td>
-                <td>${data["Class in which admitted"]}</td>
-                <td><button class="btn-view" onclick="showForm()">VIEW</button></td>
-            </tr>`;
-        } catch(e) { alert("Error connecting to sheet!"); }
+        } catch(e) { alert("Error!"); }
     }
 
-    function showForm() {
-        if(!storedData) return;
+    function showForm(idx) {
+        const s = allEntries[idx];
+        if(!s) return;
+
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('admission-form').style.display = 'block';
 
-        const s = storedData;
+        // Form fields mapping
         document.getElementById('p-app').innerText = s["Application No"] || "";
         document.getElementById('p-name').innerText = s["Name of Student"];
         document.getElementById('p-fname').innerText = s["Father's Name"];
         document.getElementById('p-mname').innerText = s["Mother's Name"];
-        document.getElementById('p-dob').innerText = s["Date of Birth"] ? s["Date of Birth"].split('T')[0] : "";
+        document.getElementById('p-dob').innerText = s["Date of Birth"] || "";
         document.getElementById('p-aadhar').innerText = s["Aadhaar Number"];
         document.getElementById('p-mob').innerText = s["Mobile Number"];
         document.getElementById('p-class').innerText = s["Class in which admitted"];
@@ -162,9 +174,9 @@
         document.getElementById('p-acc').innerText = s["Bank Account Number"] || "";
         document.getElementById('p-ifsc').innerText = s["IFSC"] || "";
 
-        // Images setup
-        document.getElementById('p-photo').src = getCleanImg(s["Photo of Student"]);
-        document.getElementById('p-sign').src = getCleanImg(s["Signature"]);
+        // Images - Base64 data direct support
+        document.getElementById('p-photo').src = s["Photo of Student"] || "";
+        document.getElementById('p-sign').src = s["Signature"] || "";
 
         // QR Code
         document.getElementById('qrcode').innerHTML = "";
