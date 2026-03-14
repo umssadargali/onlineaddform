@@ -70,6 +70,7 @@
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec';
     let allStudents = [];
+    let filteredStudents = [];
 
     window.onload = fetchList;
 
@@ -96,6 +97,7 @@
             const data = await res.json();
             if (Array.isArray(data)) { 
                 allStudents = data; 
+                filteredStudents = data;
                 renderTable(allStudents); 
             }
         } catch (e) { document.getElementById('tableBody').innerHTML = "Error!"; }
@@ -104,27 +106,27 @@
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
-        document.getElementById('totalCount').innerText = data.length; // Counter Update
+        document.getElementById('totalCount').innerText = data.length;
         
         data.forEach((s, index) => {
             const appNo = s["Application No"] || s["Application Number"] || "N/A";
-            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent('${appNo}')">VIEW</button></td></tr>`;
+            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td></tr>`;
         });
     }
 
     function filterTable() {
         const val = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allStudents.filter(s => {
+        filteredStudents = allStudents.filter(s => {
             const name = (s["Name of Student"] || "").toLowerCase();
             const sClass = (s["Class in which admitted"] || "").toString().toLowerCase();
-            // Naam ya Class dono mein se koi bhi match kare
             return name.includes(val) || sClass === val || sClass.includes(val);
         });
-        renderTable(filtered);
+        renderTable(filteredStudents);
     }
 
-    function viewStudent(appNo) {
-        const s = allStudents.find(item => (item["Application No"] || item["Application Number"]) == appNo);
+    function viewStudent(index) {
+        const s = filteredStudents[index];
+        if(!s) return;
         document.getElementById('modal').style.display = 'block';
         renderPrint(s);
     }
@@ -136,7 +138,7 @@
         
         printArea.innerHTML = `
             <div class="p-head">
-                <h2 style="margin:0; color:#b71c1c; font-size:22px;">IQRA PUBLIC SCHOOL</h2>
+                <h2 style="margin:0; color:#b71c1c; font-size:22px;">ALIGARH MUSLIM UNIVERSITY</h2>
                 <h4 style="margin:2px 0;">Session : 2026-27</h4>
                 <h3 style="margin:0; font-size:18px;">IQRA PUBLIC SCHOOL</h3>
                 <p style="font-weight:bold; margin:3px 0; font-size:14px;">Application Form for Admission</p>
