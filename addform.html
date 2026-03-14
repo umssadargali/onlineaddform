@@ -1,155 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Admission - Stable Print</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>IPS Data Manager</title>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         
-        .search-area { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; border-top: 6px solid var(--p); text-align: center; }
-        .search-area input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-find { background: var(--p); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
-        #preview-wrap { display: none; }
-        .admit-card { 
-            width: 210mm; min-height: 295mm; padding: 12mm; margin: 10px auto;
-            background: white; border: 1px solid #000; box-sizing: border-box;
-            position: relative; font-size: 13px;
-        }
+        .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; }
         
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h2 { color: #b71c1c; margin: 0; font-size: 22px; }
-        
-        /* Photo Frame wahi purana jaisa aapne manga */
-        .photo-box { position: absolute; top: 12mm; right: 12mm; width: 35mm; height: 45mm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .section-head { background: #e0e0e0; font-weight: bold; padding: 6px 10px; border: 1px solid #000; margin-top: 15px; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table td { border: 1px solid #000; padding: 8px; width: 25%; }
-        
-        .footer-signs { margin-top: 60px; display: flex; justify-content: space-between; font-weight: bold; }
-        .sign-item { border-top: 1px solid #000; width: 60mm; text-align: center; padding-top: 5px; }
-        .sign-item img { height: 38px; display: block; margin: 0 auto 5px auto; }
+        /* Search Box Design */
+        .search-wrapper { position: relative; width: 100%; max-width: 400px; }
+        #searchBox { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 25px; outline: none; transition: 0.3s; }
+        #searchBox:focus { border-color: var(--p); box-shadow: 0 0 8px rgba(26,93,26,0.2); }
 
-        .btn-save { background: #2d5a27; color: white; border: none; padding: 15px 45px; border-radius: 5px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; }
+        /* Table Design */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { background: var(--p); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f1f8f1; }
 
-        @media print {
-            .search-area, .btn-save, #back-link { display: none !important; }
-            body { background: white; padding: 0; }
-            .admit-card { margin: 0; border: none; box-shadow: none; width: 100%; }
-            @page { size: portrait; margin: 0; }
-        }
+        .btn-view { background: #b71c1c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        
+        #loading { text-align: center; color: var(--p); font-weight: bold; padding: 20px; }
     </style>
 </head>
 <body>
 
-<div class="search-area" id="search-box">
-    <h3 style="color:var(--p)">IQRA PUBLIC SCHOOL</h3>
-    <input type="text" id="sName" placeholder="Student Full Name">
-    <input type="number" id="sAadhar" placeholder="Aadhaar Number">
-    <button class="btn-find" onclick="searchData()">PREVIEW</button>
-</div>
-
-<div id="preview-wrap">
-    <div class="admit-card">
-        <div style="font-size: 11px; font-weight: bold;">
-            App No: <span id="v-app"></span> | Roll: <span id="v-roll"></span> | Date: <span id="v-date"></span>
-        </div>
-        
-        <div class="header">
-            <h2>ALIGARH MUSLIM UNIVERSITY</h2>
-            <p>Session: 2026-27 | Admission Form</p>
-            <p><b>IQRA PUBLIC SCHOOL</b></p>
-            <div id="qrcode" style="display: flex; justify-content: center; margin-top: 8px;"></div>
-        </div>
-
-        <div class="photo-box"><img id="v-photo" src="" alt="Photo Not Loaded"></div>
-
-        <div class="section-head">PERSONAL DETAILS</div>
-        <table class="data-table">
-            <tr><td><b>Student Name:</b></td><td id="v-name"></td><td><b>Father's Name:</b></td><td id="v-fname"></td></tr>
-            <tr><td><b>Mother's Name:</b></td><td id="v-mname"></td><td><b>Date of Birth:</b></td><td id="v-dob"></td></tr>
-            <tr><td><b>Caste/Cat:</b></td><td id="v-caste"></td><td><b>Aadhaar No:</b></td><td id="v-aadhar"></td></tr>
-        </table>
-
-        <div class="section-head">ACADEMIC & CONTACT</div>
-        <table class="data-table">
-            <tr><td><b>Mobile No:</b></td><td id="v-mob"></td><td><b>Residence:</b></td><td id="v-res"></td></tr>
-            <tr><td><b>Prev School:</b></td><td colspan="3" id="v-pschool"></td></tr>
-            <tr><td><b>Admitted Class:</b></td><td id="v-class"></td><td><b>TC No:</b></td><td id="v-tc"></td></tr>
-        </table>
-
-        <div class="section-head">BANK DETAILS</div>
-        <table class="data-table">
-            <tr><td><b>Account Holder:</b></td><td id="v-aholder"></td><td><b>Bank Name:</b></td><td id="v-bank"></td></tr>
-            <tr><td><b>Account No:</b></td><td id="v-acc"></td><td><b>IFSC Code:</b></td><td id="v-ifsc"></td></tr>
-        </table>
-
-        <div class="footer-signs">
-            <div class="sign-item"><img id="v-sign" src=""><br>Student Signature</div>
-            <div class="sign-item"><br>Guardian Signature</div>
-            <div class="sign-item"><br>Principal Signature</div>
+<div class="container">
+    <div class="header-box">
+        <h2 style="color:var(--p); margin:0;">IPS Student Records</h2>
+        <div class="search-wrapper">
+            <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Student ka naam likhein...">
         </div>
     </div>
 
-    <button class="btn-save" onclick="window.print()">💾 SAVE AS PDF</button>
-    <center id="back-link"><a href="javascript:location.reload()">Back to Search</a></center>
+    <div id="loading">Data load ho raha hai, intezar karein...</div>
+
+    <div class="table-container">
+        <table id="studentTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>App No</th>
+                    <th>Student Name</th>
+                    <th>Father's Name</th>
+                    <th>Class</th>
+                    <th>Aadhaar</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
+    // Aapka wahi purana URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
+    let allData = [];
 
-    // Sabse majboot link format
-    function forceLoadImage(url) {
-        if (!url) return "";
-        const id = url.match(/[-\w]{25,}/);
-        // Hum Google Drive ke direct thumbnail proxy ka use kar rahe hain
-        return id ? `https://lh3.googleusercontent.com/d/${id[0]}` : url;
-    }
-
-    async function searchData() {
-        const name = document.getElementById('sName').value;
-        const aadhar = document.getElementById('sAadhar').value;
-        if(!name || !aadhar) return alert("Details bhariye");
-        
+    // Data fetch karne ka function
+    async function loadData() {
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
+            // Hum "action=readAll" bhej rahe hain (Agar script support kare) 
+            // Ya fir bina parameters ke fetch kar rahe hain
+            const res = await fetch(scriptURL);
             const data = await res.json();
-            if(data === "Not Found") return alert("Data nahi mila");
-            fillForm(data);
-        } catch(e) { alert("Server Error!"); }
+            
+            allData = Array.isArray(data) ? data : [data]; 
+            renderTable(allData);
+            
+            document.getElementById('loading').style.display = "none";
+            document.getElementById('studentTable').style.display = "table";
+        } catch (e) {
+            document.getElementById('loading').innerText = "Error: Data load nahi ho saka!";
+        }
     }
 
-    function fillForm(data) {
-        document.getElementById('search-box').style.display = "none";
-        document.getElementById('preview-wrap').style.display = "block";
-
-        document.getElementById('v-app').innerText = data["Application No"] || "";
-        document.getElementById('v-name').innerText = data["Name of Student"];
-        document.getElementById('v-fname').innerText = data["Father's Name"];
-        document.getElementById('v-mname').innerText = data["Mother's Name"];
-        document.getElementById('v-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
-        document.getElementById('v-caste').innerText = (data["Caste"] || "") + " / " + (data["Category"] || "");
-        document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
-        document.getElementById('v-mob').innerText = data["Mobile Number"];
-        document.getElementById('v-res').innerText = data["Permanent Residence"] || "N/A";
-        document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"] || "";
-        document.getElementById('v-class').innerText = data["Class in which admitted"];
-        document.getElementById('v-tc').innerText = data["T.C No."] || "";
-        document.getElementById('v-aholder').innerText = data["Account Holder Name"] || "";
-        document.getElementById('v-bank').innerText = data["Bank Name"] || "";
-        document.getElementById('v-acc').innerText = data["Bank Account Number"] || "";
-        document.getElementById('v-ifsc').innerText = data["IFSC"] || "";
-
-        // Images load kar raha hoon
-        document.getElementById('v-photo').src = forceLoadImage(data["Photo of Student"]);
-        document.getElementById('v-sign').src = forceLoadImage(data["Signature"]);
-
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 65, height: 65 });
+    function renderTable(dataList) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
+        
+        dataList.forEach((item, index) => {
+            let row = `<tr>
+                <td>${item["Application No"] || 'N/A'}</td>
+                <td><b>${item["Name of Student"]}</b></td>
+                <td>${item["Father's Name"]}</td>
+                <td>${item["Class in which admitted"]}</td>
+                <td>${item["Aadhaar Number"]}</td>
+                <td><button class="btn-view" onclick="alert('Detais:\nName: ${item["Name of Student"]}\nMob: ${item["Mobile Number"]}')">VIEW</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
     }
+
+    // Search filter function
+    function filterTable() {
+        let input = document.getElementById("searchBox").value.toUpperCase();
+        let table = document.getElementById("studentTable");
+        let tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) {
+            let td = tr[i].getElementsByTagName("td")[1]; // Student Name column
+            if (td) {
+                let txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(input) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    // Page load hote hi data mangwao
+    window.onload = loadData;
 </script>
+
 </body>
 </html>
