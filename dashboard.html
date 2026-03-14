@@ -8,28 +8,23 @@
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
-        
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; }
         .search-box { padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; width: 250px; outline: none; }
-
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th { background: var(--p); color: white; padding: 12px; text-align: left; }
         td { padding: 10px; border-bottom: 1px solid #eee; }
         tr:hover { background: #f9f9f9; }
-
         .btn-view { background: #b71c1c; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        
-        /* Modal Style */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px 0; }
         .a4-card { background: white; width: 210mm; min-height: 297mm; padding: 12mm; margin: auto; box-sizing: border-box; border: 1px solid #000; position: relative; }
-        
         .p-head { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; }
         .p-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .p-table td { border: 1px solid #ccc; padding: 7px 10px; font-size: 12.5px; }
         .sh { background: #f0f0f0; font-weight: bold; width: 22%; }
         .section-bar { background: #e9e9e9; font-weight: bold; padding: 5px 10px; font-size: 13px; margin: 15px 0 5px 0; border: 1px solid #333; }
-
+        .declaration-box { font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid #eee; background: #fffcf0; }
+        
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -45,22 +40,12 @@
         <h2 style="color:var(--p); margin:0;">IPS Student Records</h2>
         <input type="text" class="search-box" id="searchInput" onkeyup="filterTable()" placeholder="Student ka naam likhein...">
     </div>
-
     <div class="table-wrapper">
         <table id="studentTable">
             <thead>
-                <tr>
-                    <th>App No</th>
-                    <th>Student Name</th>
-                    <th>Father's Name</th>
-                    <th>Class</th>
-                    <th>Aadhaar</th>
-                    <th>Action</th>
-                </tr>
+                <tr><th>App No</th><th>Student Name</th><th>Father's Name</th><th>Class</th><th>Aadhaar</th><th>Action</th></tr>
             </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="6" style="text-align:center;">Data loading...</td></tr>
-            </tbody>
+            <tbody id="tableBody"><tr><td colspan="6" style="text-align:center;">Data loading...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -83,13 +68,8 @@
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
-            if (Array.isArray(data)) {
-                allStudents = data;
-                renderTable(allStudents);
-            }
-        } catch (e) {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Data load nahi ho paya!</td></tr>';
-        }
+            if (Array.isArray(data)) { allStudents = data; renderTable(allStudents); }
+        } catch (e) { document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Data error!</td></tr>'; }
     }
 
     function renderTable(data) {
@@ -97,62 +77,38 @@
         tbody.innerHTML = "";
         data.forEach((s, index) => {
             const appNo = s["Application No"] || s["Application Number"] || "Pending";
-            const name = s["Name of Student"] || "N/A";
-            const father = s["Father's Name"] || "N/A";
-            const sClass = s["Class in which admitted"] || "N/A";
-            const aadhar = s["Aadhaar Number"] || "N/A";
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${appNo}</b></td>
-                    <td>${name}</td>
-                    <td>${father}</td>
-                    <td>${sClass}</td>
-                    <td>${aadhar}</td>
-                    <td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td>
-                </tr>
-            `;
+            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td>${s["Aadhaar Number"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td></tr>`;
         });
     }
 
     function filterTable() {
         const val = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allStudents.filter(s => 
-            (s["Name of Student"] || "").toLowerCase().includes(val) || 
-            (String(s["Application No"] || "")).toLowerCase().includes(val)
-        );
+        const filtered = allStudents.filter(s => (s["Name of Student"] || "").toLowerCase().includes(val));
         renderTable(filtered);
     }
 
     async function viewStudent(index) {
         const s = allStudents[index];
-        const modal = document.getElementById('modal');
-        const printArea = document.getElementById('printArea');
-        
-        modal.style.display = 'block';
-        printArea.innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate & Photo...</h3>";
+        document.getElementById('modal').style.display = 'block';
+        document.getElementById('printArea').innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate...</h3>";
 
         try {
-            // PHOTO FIX: Base64 data fetch karne ke liye script ko student ka name aur aadhar bhej rahe hain
-            const nameParam = encodeURIComponent(s["Name of Student"]);
-            const aadharParam = s["Aadhaar Number"] || "";
-            const res = await fetch(`${scriptURL}?searchName=${nameParam}&searchAadhar=${aadharParam}`);
+            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(s["Name of Student"])}&searchAadhar=${s["Aadhaar Number"]}`);
             const fullData = await res.json();
-            
-            if (fullData === "Not Found" || typeof fullData === 'string') {
-                renderPrint(s); // Agar server se photo na mile toh basic data dikhao
-            } else {
-                renderPrint(fullData); // Isme Photo aur Signature Base64 mein honge
-            }
-        } catch(e) {
-            console.error("Fetch Error:", e);
-            renderPrint(s);
-        }
+            renderPrint(fullData === "Not Found" ? s : fullData);
+        } catch(e) { renderPrint(s); }
+    }
+
+    // Google Drive Link ko bypass karne ke liye function
+    function fixDriveLink(url) {
+        if (!url) return '';
+        if (url.startsWith('data:image')) return url; // Already Base64
+        const id = url.match(/[-\w]{25,}/);
+        return id ? `https://lh3.googleusercontent.com/d/${id[0]}=s500` : url;
     }
 
     function renderPrint(d) {
         const printArea = document.getElementById('printArea');
-        // App Number fallback
         const appNo = d["Application No"] || d["Application Number"] || "N/A";
         
         printArea.innerHTML = `
@@ -170,8 +126,8 @@
                     <b>Date of Admission:</b> ${d["Date of Admission"] || '---'}
                 </div>
                 <div id="qrPrint"></div>
-                <div style="width:105px; height:125px; border:1px solid #000; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                    ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%; object-fit:cover;">` : '<span style="font-size:10px;">No Photo</span>'}
+                <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden;">
+                    <img src="${fixDriveLink(d["Photo of Student"])}" style="width:100%;height:100%; object-fit:cover;" onerror="this.style.display='none'">
                 </div>
             </div>
 
@@ -201,19 +157,23 @@
                 <tr><td class="sh">Account No</td><td>${d["Bank Account Number"] || ''}</td><td class="sh">IFSC Code</td><td>${d["IFSC"] || ''}</td></tr>
             </table>
 
-            <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
+            <div class="declaration-box">
+                <b>DECLARATION:</b><br>
+                1. I solemnly undertake to accept and abide by the rules of the school.<br>
+                2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
+                3. If at any time, the entries are found incorrect, the admission may be cancelled.
+            </div>
+
+            <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
                 <div style="width:130px;">
-                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:45px; object-fit:contain;">` : ''}
+                    <img src="${fixDriveLink(d["Signature"])}" style="width:100%; height:40px; object-fit:contain;" onerror="this.style.display='none'">
                     <br>_________________<br>Student Signature
                 </div>
-                <div><br><br>_________________<br>Guardian's Signature</div>
-                <div><br><br>_________________<br>Principal's Signature</div>
+                <div><br><br>_________________<br>Guardian Signature</div>
+                <div><br><br>_________________<br>Principal Signature</div>
             </div>
         `;
-        if(appNo !== "N/A") {
-            document.getElementById("qrPrint").innerHTML = "";
-            new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
-        }
+        if(appNo !== "N/A") new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
     }
 
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
