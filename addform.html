@@ -1,171 +1,174 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Admin Portal</title>
+    <title>IPS Student Management</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Dashboard Area */
-        .dash-card { max-width: 900px; margin: 10px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .search-box { display: flex; gap: 8px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
-        .btn-search { background: var(--p); color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        /* Dashboard */
+        .admin-panel { max-width: 950px; margin: 10px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; outline: none; }
+        .btn-search { background: var(--p); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         
+        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: var(--p); color: white; padding: 12px; text-align: left; border-radius: 4px 4px 0 0; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        .btn-view { background: #b71c1c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        th { background: var(--p); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn-view { background: #b71c1c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
 
-        /* Admission Form Area (Hidden by default) */
-        #form-preview { display: none; width: 210mm; min-height: 297mm; padding: 12mm; background: white; border: 1px solid #000; margin: 20px auto; position: relative; box-sizing: border-box; }
-        .form-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-        .photo-frame { position: absolute; top: 12mm; right: 12mm; width: 35mm; height: 45mm; border: 1px solid #000; background: #fff; }
-        .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        /* Admission Form (Hidden for UI, Visible for Print) */
+        #admission-form { display: none; width: 210mm; min-height: 297mm; padding: 15mm; background: white; border: 1px solid #000; margin: 20px auto; position: relative; box-sizing: border-box; }
+        .form-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .photo-box { position: absolute; top: 15mm; right: 15mm; width: 35mm; height: 45mm; border: 1px solid #000; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .sec-title { background: #e0e0e0; font-weight: bold; padding: 6px; border: 1px solid #000; margin-top: 15px; font-size: 14px; }
-        .grid-table { width: 100%; border-collapse: collapse; }
-        .grid-table td { border: 1px solid #000; padding: 8px; width: 25%; font-size: 13px; }
+        .section-bar { background: #e0e0e0; font-weight: bold; padding: 8px; border: 1px solid #000; margin-top: 15px; font-size: 14px; }
+        .data-grid { width: 100%; border-collapse: collapse; }
+        .data-grid td { border: 1px solid #000; padding: 8px; width: 25%; font-size: 13px; }
 
-        .btn-print { background: #2d5a27; color: white; border: none; padding: 15px 30px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 10px; }
+        .no-print { text-align: center; margin-top: 30px; }
+        .btn-print { background: #2d5a27; color: white; border: none; padding: 15px 35px; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 5px; }
 
         @media print {
-            body * { display: none !important; }
-            #form-preview, #form-preview * { display: block !important; }
-            #form-preview { border: none; margin: 0; padding: 0; width: 100%; }
-            .no-print { display: none !important; }
+            .admin-panel, .no-print { display: none !important; }
+            #admission-form { display: block !important; border: none; margin: 0; padding: 0; width: 100%; }
             @page { size: portrait; margin: 0; }
         }
     </style>
 </head>
 <body>
 
-<div id="main-dash" class="dash-card">
-    <h2 style="color:var(--p); margin-top:0;">IPS STUDENT DATA</h2>
-    <div class="search-box">
-        <input type="text" id="sName" placeholder="Student Name">
-        <input type="number" id="sAadhar" placeholder="Aadhar Number">
-        <button class="btn-search" onclick="fetchData()">SEARCH</button>
+<div id="dashboard" class="admin-panel">
+    <h2 style="color:var(--p); margin-top:0;">IPS ADMISSION DATABASE</h2>
+    <div class="search-row">
+        <input type="text" id="nameSearch" placeholder="Student Name">
+        <input type="number" id="aadharSearch" placeholder="Aadhar Number">
+        <button class="btn-search" onclick="doSearch()">SEARCH RECORD</button>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Student Name</th>
-                <th>Father's Name</th>
-                <th>Class</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            <tr><td colspan="4" style="text-align:center; color:#999;">Data search karein...</td></tr>
-        </tbody>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>App No</th>
+                    <th>Student Name</th>
+                    <th>Father's Name</th>
+                    <th>Class</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="listBody">
+                <tr><td colspan="5" style="text-align:center; color:#888;">Naya data search karein...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<div id="form-preview">
-    <div style="font-size: 11px; font-weight: bold;">
-        App No: <span id="f-app"></span> | Roll: <span id="f-roll"></span>
-    </div>
-    
+<div id="admission-form">
+    <div style="font-size: 11px;">App No: <span id="p-app"></span></div>
     <div class="form-header">
-        <h2 style="color:#b71c1c; margin:5px 0;">ALIGARH MUSLIM UNIVERSITY</h2>
-        <p style="margin:2px; font-weight:bold;">IQRA PUBLIC SCHOOL | Session 2026-27</p>
+        <h2 style="color:#b71c1c; margin:0;">ALIGARH MUSLIM UNIVERSITY</h2>
+        <p style="margin:5px; font-weight:bold;">IQRA PUBLIC SCHOOL | SESSION 2026-27</p>
         <div id="qrcode" style="display:flex; justify-content:center; margin-top:10px;"></div>
     </div>
 
-    <div class="photo-frame"><img id="f-photo" src=""></div>
+    <div class="photo-box"><img id="p-photo" src="" alt="Photo Loading..."></div>
 
-    <div class="sec-title">1. PERSONAL INFORMATION</div>
-    <table class="grid-table">
-        <tr><td><b>Name:</b></td><td id="f-name"></td><td><b>Father:</b></td><td id="f-fname"></td></tr>
-        <tr><td><b>Mother:</b></td><td id="f-mname"></td><td><b>D.O.B:</b></td><td id="f-dob"></td></tr>
-        <tr><td><b>Aadhar:</b></td><td id="f-aadhar"></td><td><b>Mobile:</b></td><td id="f-mob"></td></tr>
+    <div class="section-bar">PERSONAL INFORMATION</div>
+    <table class="data-grid">
+        <tr><td><b>Student Name:</b></td><td id="p-name"></td><td><b>Father's Name:</b></td><td id="p-fname"></td></tr>
+        <tr><td><b>Mother's Name:</b></td><td id="p-mname"></td><td><b>Date of Birth:</b></td><td id="p-dob"></td></tr>
+        <tr><td><b>Aadhaar No:</b></td><td id="p-aadhar"></td><td><b>Mobile No:</b></td><td id="p-mob"></td></tr>
     </table>
 
-    <div class="sec-title">2. ACADEMIC & BANK DETAILS</div>
-    <table class="grid-table">
-        <tr><td><b>Class Admitted:</b></td><td id="f-class"></td><td><b>Prev School:</b></td><td id="f-pschool"></td></tr>
-        <tr><td><b>Bank Name:</b></td><td id="f-bank"></td><td><b>A/C No:</b></td><td id="f-acc"></td></tr>
-        <tr><td><b>IFSC Code:</b></td><td colspan="3" id="f-ifsc"></td></tr>
+    <div class="section-bar">ACADEMIC & BANK DETAILS</div>
+    <table class="data-grid">
+        <tr><td><b>Admitted Class:</b></td><td id="p-class"></td><td><b>Prev School:</b></td><td id="p-pschool"></td></tr>
+        <tr><td><b>Bank Name:</b></td><td id="p-bank"></td><td><b>A/C Number:</b></td><td id="p-acc"></td></tr>
+        <tr><td><b>IFSC Code:</b></td><td colspan="3" id="p-ifsc"></td></tr>
     </table>
 
-    <div style="margin-top:60px; display:flex; justify-content:space-between; font-weight:bold;">
-        <div style="text-align:center; border-top:1px solid #000; width:60mm;"><img id="f-sign" style="height:35px; display:block; margin:0 auto;"><br>Student Signature</div>
+    <div style="margin-top:60px; display:flex; justify-content:space-between;">
+        <div style="text-align:center; border-top:1px solid #000; width:60mm;"><img id="p-sign" style="height:35px; display:block; margin:0 auto;"><br>Student Signature</div>
         <div style="text-align:center; border-top:1px solid #000; width:60mm;"><br>Principal/Office</div>
     </div>
 
-    <div class="no-print" style="text-align:center; margin-top:40px;">
+    <div class="no-print">
         <button class="btn-print" onclick="window.print()">🖨️ PRINT PDF</button>
-        <button class="btn-print" style="background:#666;" onclick="location.reload()">🔙 BACK TO LIST</button>
+        <button class="btn-print" style="background:#555;" onclick="location.reload()">🔙 BACK TO LIST</button>
     </div>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec'; // Apna URL yahan paste karein
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec'; // Apna URL yahan daalein
 
-    function fixLink(url) {
+    // Photo loading fix
+    function getCleanImg(url) {
         if (!url) return "";
         const id = url.match(/[-\w]{25,}/);
-        return id ? `https://drive.google.com/uc?export=view&id=${id[0]}` : url;
+        // Thumbnail proxy ka use kar rahe hain jo load hone mein fast aur stable hai
+        return id ? `https://drive.google.com/thumbnail?id=${id[0]}&sz=w500` : url;
     }
 
-    let currentStudentData = null;
+    let storedData = null;
 
-    async function fetchData() {
-        const name = document.getElementById('sName').value;
-        const aadhar = document.getElementById('sAadhar').value;
-        if(!name || !aadhar) return alert("Dono detail bhariye");
+    async function doSearch() {
+        const n = document.getElementById('nameSearch').value;
+        const a = document.getElementById('aadharSearch').value;
+        if(!n || !a) return alert("Pura detail bhariye");
 
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Searching...</td></tr>';
+        const list = document.getElementById('listBody');
+        list.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
 
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
-            const data = await res.json();
+            const response = await fetch(`${SCRIPT_URL}?searchName=${encodeURIComponent(n)}&searchAadhar=${a}`);
+            const data = await response.json();
 
             if(data === "Not Found") {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Record nahi mila!</td></tr>';
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Data nahi mila!</td></tr>';
                 return;
             }
 
-            currentStudentData = data; // Store data for view
-            tbody.innerHTML = `<tr>
+            storedData = data;
+            list.innerHTML = `<tr>
+                <td>${data["Application No"] || '-'}</td>
                 <td><b>${data["Name of Student"]}</b></td>
                 <td>${data["Father's Name"]}</td>
                 <td>${data["Class in which admitted"]}</td>
-                <td><button class="btn-view" onclick="openForm()">VIEW</button></td>
+                <td><button class="btn-view" onclick="showForm()">VIEW</button></td>
             </tr>`;
-        } catch(e) { alert("Server Error!"); }
+        } catch(e) { alert("Error connecting to sheet!"); }
     }
 
-    function openForm() {
-        if(!currentStudentData) return;
-        
-        document.getElementById('main-dash').style.display = 'none';
-        document.getElementById('form-preview').style.display = 'block';
+    function showForm() {
+        if(!storedData) return;
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('admission-form').style.display = 'block';
 
-        const d = currentStudentData;
-        document.getElementById('f-app').innerText = d["Application No"] || "";
-        document.getElementById('f-roll').innerText = d["Serial No. of Admission"] || "";
-        document.getElementById('f-name').innerText = d["Name of Student"];
-        document.getElementById('f-fname').innerText = d["Father's Name"];
-        document.getElementById('f-mname').innerText = d["Mother's Name"];
-        document.getElementById('f-dob').innerText = d["Date of Birth"] ? d["Date of Birth"].split('T')[0] : "";
-        document.getElementById('f-aadhar').innerText = d["Aadhaar Number"];
-        document.getElementById('f-mob').innerText = d["Mobile Number"];
-        document.getElementById('f-class').innerText = d["Class in which admitted"];
-        document.getElementById('f-pschool').innerText = d["Name & Place of Previous School"] || "";
-        document.getElementById('f-bank').innerText = d["Bank Name"] || "";
-        document.getElementById('f-acc').innerText = d["Bank Account Number"] || "";
-        document.getElementById('f-ifsc').innerText = d["IFSC"] || "";
+        const s = storedData;
+        document.getElementById('p-app').innerText = s["Application No"] || "";
+        document.getElementById('p-name').innerText = s["Name of Student"];
+        document.getElementById('p-fname').innerText = s["Father's Name"];
+        document.getElementById('p-mname').innerText = s["Mother's Name"];
+        document.getElementById('p-dob').innerText = s["Date of Birth"] ? s["Date of Birth"].split('T')[0] : "";
+        document.getElementById('p-aadhar').innerText = s["Aadhaar Number"];
+        document.getElementById('p-mob').innerText = s["Mobile Number"];
+        document.getElementById('p-class').innerText = s["Class in which admitted"];
+        document.getElementById('p-pschool').innerText = s["Name & Place of Previous School"] || "";
+        document.getElementById('p-bank').innerText = s["Bank Name"] || "";
+        document.getElementById('p-acc').innerText = s["Bank Account Number"] || "";
+        document.getElementById('p-ifsc').innerText = s["IFSC"] || "";
 
-        document.getElementById('f-photo').src = fixLink(d["Photo of Student"]);
-        document.getElementById('f-sign').src = fixLink(d["Signature"]);
+        // Images setup
+        document.getElementById('p-photo').src = getCleanImg(s["Photo of Student"]);
+        document.getElementById('p-sign').src = getCleanImg(s["Signature"]);
 
+        // QR Code
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: String(d["Application No"]), width: 70, height: 70 });
+        new QRCode(document.getElementById("qrcode"), { text: String(s["Application No"]), width: 70, height: 70 });
     }
 </script>
 </body>
