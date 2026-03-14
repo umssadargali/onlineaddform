@@ -6,159 +6,105 @@
     <style>
         :root { --p: #1a5d1a; --gold: #FFD700; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
+        .no-print-area { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        .no-print-area { background: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        
-        /* ID Card Layout */
         .id-grid { display: grid; grid-template-columns: repeat(auto-fill, 85mm); gap: 15px; justify-content: center; }
-        
         .id-card { 
-            width: 85mm; 
-            height: 55mm; 
-            background: white; 
-            border: 2px solid var(--p); 
-            border-radius: 10px; 
-            position: relative; 
-            overflow: hidden; 
-            box-sizing: border-box;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 85mm; height: 55mm; background: white; border: 2px solid var(--p); 
+            border-radius: 10px; position: relative; overflow: hidden; box-sizing: border-box;
+            background-image: linear-gradient(to bottom right, #ffffff, #f9f9f9);
         }
 
-        /* Top Header */
-        .id-header { 
-            background: var(--p); 
-            color: white; 
-            padding: 5px; 
-            text-align: center; 
-            border-bottom: 2px solid var(--gold);
-        }
-        .id-header h3 { margin: 0; font-size: 14px; letter-spacing: 0.5px; }
+        .id-header { background: var(--p); color: white; padding: 5px; text-align: center; border-bottom: 2px solid var(--gold); }
+        .id-header h3 { margin: 0; font-size: 14px; }
         .id-header p { margin: 0; font-size: 8px; color: var(--gold); }
 
-        .id-body { display: flex; padding: 8px; }
-        
-        /* Photo Box */
-        .id-photo { 
-            width: 22mm; 
-            height: 28mm; 
-            border: 1px solid #ccc; 
-            margin-right: 10px;
-            background: #f9f9f9;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .id-body { display: flex; padding: 8px; align-items: flex-start; }
+        .id-photo-box { 
+            width: 22mm; height: 28mm; border: 1px solid #333; margin-right: 10px;
+            background: #eee; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-        .id-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .id-photo-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Student Details */
-        .id-details { flex: 1; font-size: 10px; line-height: 1.5; color: #333; }
-        .id-details b { color: var(--p); width: 60px; display: inline-block; }
+        .id-details { flex: 1; font-size: 10px; line-height: 1.5; }
+        .id-details b { color: var(--p); display: inline-block; width: 55px; }
 
-        /* Footer */
-        .id-footer { 
-            position: absolute; 
-            bottom: 0; 
-            width: 100%; 
-            background: #eee; 
-            font-size: 8px; 
-            padding: 3px 0; 
-            text-align: center; 
-            border-top: 1px solid #ddd;
-        }
-
-        .sign-area { position: absolute; right: 8px; bottom: 20px; text-align: center; }
+        .sign-area { position: absolute; right: 10px; bottom: 15px; text-align: center; }
         .sign-area img { width: 40px; height: 15px; object-fit: contain; }
-        .sign-label { font-size: 7px; border-top: 0.5px solid #000; margin-top: 2px; }
+        .sign-label { font-size: 7px; border-top: 0.5px solid #000; padding-top: 1px; }
+
+        .id-footer { position: absolute; bottom: 0; width: 100%; background: var(--p); color: white; font-size: 8px; padding: 2px 0; text-align: center; }
 
         @media print {
-            body { padding: 0; background: white; }
             .no-print-area { display: none; }
-            .id-card { box-shadow: none; break-inside: avoid; margin-bottom: 10px; border: 1px solid var(--p); }
-            .id-grid { gap: 10px; }
+            body { background: white; padding: 0; }
+            .id-card { box-shadow: none; break-inside: avoid; border: 1.5px solid var(--p); margin-bottom: 5px; }
         }
     </style>
 </head>
 <body>
 
 <div class="no-print-area">
-    <h2 style="color:var(--p); margin-top:0;">IPS ID Card Generator</h2>
-    <p>Niche button par click karke sabhi students ke ID cards ek saath load karein.</p>
-    <button onclick="fetchIDCards()" id="loadBtn" style="padding:12px 25px; background:var(--p); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">LOAD ALL ID CARDS</button>
-    <button onclick="window.print()" style="padding:12px 25px; background:black; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-left:10px;">PRINT CARDS</button>
+    <h2>IQRA PUBLIC SCHOOL - ID CARD GENERATOR</h2>
+    <button onclick="fetchIDCards()" id="loadBtn" style="padding:10px 20px; background:var(--p); color:white; border:none; cursor:pointer; font-weight:bold; border-radius:5px;">LOAD CARDS</button>
+    <button onclick="window.print()" style="padding:10px 20px; background:black; color:white; border:none; cursor:pointer; font-weight:bold; border-radius:5px; margin-left:10px;">PRINT ALL</button>
 </div>
 
-<div class="id-grid" id="idContainer">
-    </div>
+<div class="id-grid" id="idContainer"></div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec';
 
+    // Google Drive URL ko Direct Link mein badalne ke liye
+    function formatImg(url) {
+        if (!url) return "";
+        if (url.includes("data:image")) return url; // Base64
+        const id = url.match(/[-\w]{25,}/);
+        return id ? `https://lh3.googleusercontent.com/d/${id[0]}` : url;
+    }
+
     async function fetchIDCards() {
         const btn = document.getElementById('loadBtn');
-        btn.innerText = "Loading Data...";
-        btn.disabled = true;
-
+        btn.innerText = "Data load ho raha hai...";
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
-            if (Array.isArray(data)) {
-                renderIDCards(data);
-                btn.innerText = "LOADED SUCCESSFULLY";
-            }
-        } catch (e) {
-            alert("Data load nahi ho paya!");
-            btn.innerText = "RETRY LOAD";
-            btn.disabled = false;
-        }
+            renderIDCards(data);
+            btn.innerText = "LOADED";
+        } catch (e) { alert("Error!"); btn.innerText = "RETRY"; }
     }
 
     function renderIDCards(data) {
         const container = document.getElementById('idContainer');
         container.innerHTML = "";
-        
         data.forEach(s => {
-            const name = s["Name of Student"] || "---";
-            const father = s["Father's Name"] || "---";
-            const sClass = s["Class in which admitted"] || "---";
-            const roll = s["Application No"] || s["Application Number"] || "---";
-            const mobile = s["Mobile Number"] || "---";
-            const photo = s["Photo of Student"] || "";
-            const sign = s["Signature"] || "";
-
             container.innerHTML += `
                 <div class="id-card">
                     <div class="id-header">
                         <h3>IQRA PUBLIC SCHOOL</h3>
                         <p>ALIGARH MUSLIM UNIVERSITY CAMPUS</p>
                     </div>
-                    
                     <div class="id-body">
-                        <div class="id-photo">
-                            ${photo ? `<img src="${photo}">` : '<span style="font-size:8px;">PHOTO</span>'}
+                        <div class="id-photo-box">
+                            <img src="${formatImg(s["Photo of Student"])}" onerror="this.src='https://via.placeholder.com/150?text=No+Photo'">
                         </div>
                         <div class="id-details">
-                            <b>NAME:</b> ${name}<br>
-                            <b>FATHER:</b> ${father}<br>
-                            <b>CLASS:</b> ${sClass}<br>
-                            <b>ROLL NO:</b> ${roll}<br>
-                            <b>MOBILE:</b> ${mobile}
+                            <b>NAME:</b> ${s["Name of Student"] || ''}<br>
+                            <b>FATHER:</b> ${s["Father's Name"] || ''}<br>
+                            <b>CLASS:</b> ${s["Class in which admitted"] || ''}<br>
+                            <b>APP NO:</b> ${s["Application No"] || ''}<br>
+                            <b>MOBILE:</b> ${s["Mobile Number"] || ''}
                         </div>
                     </div>
-
                     <div class="sign-area">
-                        ${sign ? `<img src="${sign}">` : '<div style="height:15px;"></div>'}
+                        <img src="${formatImg(s["Signature"])}" onerror="this.style.display='none'">
                         <div class="sign-label">Principal</div>
                     </div>
-
-                    <div class="id-footer">
-                        Session: 2026-27 | Academic Excellence & Discipline
-                    </div>
+                    <div class="id-footer">Academic Session: 2026-27</div>
                 </div>
             `;
         });
     }
 </script>
-
 </body>
 </html>
