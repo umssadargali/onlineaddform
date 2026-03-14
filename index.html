@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admission Portal - IQRA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
@@ -23,7 +24,6 @@
 
         .btn-main { background: var(--p); color: white; padding: 15px; border: none; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 20px; }
         
-        /* A4 Print Modal */
         #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px 0; }
         .a4-card { background: white; width: 210mm; min-height: 297mm; padding: 12mm; margin: auto; box-sizing: border-box; border: 1px solid #000; }
         
@@ -33,11 +33,14 @@
         .sh { background: #f0f0f0; font-weight: bold; width: 22%; }
         .section-bar { background: #e9e9e9; font-weight: bold; padding: 5px 10px; font-size: 13px; margin: 15px 0 5px 0; border: 1px solid #333; }
 
+        /* Print formatting fix */
         @media print {
+            @page { size: A4; margin: 0; }
+            body { background: white; }
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; margin:0; padding: 5mm; }
-            #mBtns { display: none; }
+            #printArea { position: absolute; left: 0; top: 0; width: 210mm; border: none; margin: 0; padding: 10mm; }
+            #mBtns, .box { display: none !important; }
         }
     </style>
 </head>
@@ -86,17 +89,13 @@
         try {
             const res = await fetch(scriptURL);
             let headers = await res.json();
-            
-            // FIXED LOGIC: Agar Code.gs poori list bhej raha hai, toh headers nikaalo
             if (Array.isArray(headers) && headers.length > 0 && typeof headers[0] === 'object') {
                 headers = Object.keys(headers[0]);
             }
-
             const div = document.getElementById('dynamicFields');
             const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
             let count = 1;
-            
-            div.innerHTML = ""; // Clear existing
+            div.innerHTML = ""; 
             headers.forEach(h => {
                 if(h && !skip.includes(h.trim())) {
                     const isDate = h.includes('Date') && !h.includes('No');
@@ -119,8 +118,11 @@
     function openPre() { renderPrint(); document.getElementById('modal').style.display = 'block'; }
 
     function renderPrint(ex = {}) {
+        const printDiv = document.getElementById('printArea');
+        printDiv.innerHTML = ""; // Extra page rokne ke liye data clear kiya
         const d = Object.fromEntries(new FormData(document.getElementById('admissionForm')));
-        document.getElementById('printArea').innerHTML = `
+        
+        printDiv.innerHTML = `
             <div class="p-head">
                 <h2 style="margin:0; color:#b71c1c;">ALIGARH MUSLIM UNIVERSITY</h2>
                 <h4 style="margin:5px 0;">Session : 2026-27</h4>
@@ -156,7 +158,6 @@
                 <tr><td class="sh">Previous School</td><td colspan="3">${d["Name & Place of Previous School"] || ''}</td></tr>
                 <tr><td class="sh">Reading Class</td><td>${d["Class in which reading"] || ''}</td><td class="sh">TC No</td><td>${d["T.C No."] || ''}</td></tr>
                 <tr><td class="sh">TC Date</td><td>${d["Date of T.C"] || ''}</td><td class="sh">Admitted Class</td><td>${d["Class in which admitted"] || ''}</td></tr>
-                <tr><td class="sh">Leaving Date</td><td colspan="3">${d["Date of leaving the School"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">BANK DETAILS</div>
@@ -195,7 +196,13 @@
                 renderPrint({appNo: r.appNo, sNo: r.sNo});
                 b.style.display = "none";
                 document.getElementById('pBtn').style.display = "inline-block";
-                alert("Data Saved Successfully!");
+                // URL wala alert hatane ke liye naya tarika
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success!',
+                  text: 'Data Saved Successfully!',
+                  confirmButtonColor: '#1a5d1a'
+                });
             }
         } catch(e) { b.innerText = "FINAL SUBMIT"; b.disabled = false; alert("Error saving data"); }
     }
