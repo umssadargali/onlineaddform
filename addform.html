@@ -1,32 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Admission - Final Print</title>
+    <title>IPS Admission - Stable Print</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Search Box */
-        .search-area { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--p); text-align: center; }
+        .search-area { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; border-top: 6px solid var(--p); text-align: center; }
         .search-area input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .btn-find { background: var(--p); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
         #preview-wrap { display: none; }
         .admit-card { 
             width: 210mm; min-height: 295mm; padding: 12mm; margin: 10px auto;
-            background: white; border: 1.5px solid #000; box-sizing: border-box;
+            background: white; border: 1px solid #000; box-sizing: border-box;
             position: relative; font-size: 13px;
         }
         
         .header { text-align: center; margin-bottom: 20px; }
         .header h2 { color: #b71c1c; margin: 0; font-size: 22px; }
         
-        /* Photo Box */
-        .photo-box { position: absolute; top: 12mm; right: 12mm; width: 35mm; height: 45mm; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* Photo Frame wahi purana jaisa aapne manga */
+        .photo-box { position: absolute; top: 12mm; right: 12mm; width: 35mm; height: 45mm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .section-head { background: #e0e0e0; font-weight: bold; padding: 6px 10px; border: 1px solid #000; margin-top: 15px; text-transform: uppercase; }
+        .section-head { background: #e0e0e0; font-weight: bold; padding: 6px 10px; border: 1px solid #000; margin-top: 15px; }
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table td { border: 1px solid #000; padding: 8px; width: 25%; }
         
@@ -34,7 +33,7 @@
         .sign-item { border-top: 1px solid #000; width: 60mm; text-align: center; padding-top: 5px; }
         .sign-item img { height: 38px; display: block; margin: 0 auto 5px auto; }
 
-        .btn-save { background: #2d5a27; color: white; border: none; padding: 15px 45px; border-radius: 5px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; font-size: 16px; }
+        .btn-save { background: #2d5a27; color: white; border: none; padding: 15px 45px; border-radius: 5px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; }
 
         @media print {
             .search-area, .btn-save, #back-link { display: none !important; }
@@ -47,10 +46,10 @@
 <body>
 
 <div class="search-area" id="search-box">
-    <h3 style="color:var(--p); margin:0 0 15px 0;">IQRA PUBLIC SCHOOL</h3>
-    <input type="text" id="sName" placeholder="Full Student Name">
+    <h3 style="color:var(--p)">IQRA PUBLIC SCHOOL</h3>
+    <input type="text" id="sName" placeholder="Student Full Name">
     <input type="number" id="sAadhar" placeholder="Aadhaar Number">
-    <button class="btn-find" onclick="searchData()">PREVIEW FORM</button>
+    <button class="btn-find" onclick="searchData()">PREVIEW</button>
 </div>
 
 <div id="preview-wrap">
@@ -66,7 +65,7 @@
             <div id="qrcode" style="display: flex; justify-content: center; margin-top: 8px;"></div>
         </div>
 
-        <div class="photo-box"><img id="v-photo" src="" alt="Loading Photo..."></div>
+        <div class="photo-box"><img id="v-photo" src="" alt="Photo Not Loaded"></div>
 
         <div class="section-head">PERSONAL DETAILS</div>
         <table class="data-table">
@@ -84,13 +83,9 @@
 
         <div class="section-head">BANK DETAILS</div>
         <table class="data-table">
-            <tr><td><b>Account Holder:</b></td><td id="v-aholder"></td><td><b>Bank Name:</b></td><td id="r-bank"></td></tr>
+            <tr><td><b>Account Holder:</b></td><td id="v-aholder"></td><td><b>Bank Name:</b></td><td id="v-bank"></td></tr>
             <tr><td><b>Account No:</b></td><td id="v-acc"></td><td><b>IFSC Code:</b></td><td id="v-ifsc"></td></tr>
         </table>
-
-        <div style="margin-top:40px; font-size:11px; line-height:1.5;">
-            <b>DECLARATION:</b> I hereby declare that all information provided is true. I agree to abide by the school's rules. Admission is subject to document verification.
-        </div>
 
         <div class="footer-signs">
             <div class="sign-item"><img id="v-sign" src=""><br>Student Signature</div>
@@ -100,43 +95,38 @@
     </div>
 
     <button class="btn-save" onclick="window.print()">💾 SAVE AS PDF</button>
-    <center id="back-link"><a href="javascript:location.reload()" style="color:blue; font-size:14px;">← Search Another</a></center>
+    <center id="back-link"><a href="javascript:location.reload()">Back to Search</a></center>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
-    // Sabse majboot photo logic
-    function getPhotoUrl(url) {
+    // Sabse majboot link format
+    function forceLoadImage(url) {
         if (!url) return "";
         const id = url.match(/[-\w]{25,}/);
-        if (id) {
-            // Hum dono formats try kar rahe hain
-            return `https://lh3.googleusercontent.com/d/${id[0]}`;
-        }
-        return url;
+        // Hum Google Drive ke direct thumbnail proxy ka use kar rahe hain
+        return id ? `https://lh3.googleusercontent.com/d/${id[0]}` : url;
     }
 
     async function searchData() {
         const name = document.getElementById('sName').value;
         const aadhar = document.getElementById('sAadhar').value;
-        if(!name || !aadhar) return alert("Fill Name and Aadhaar");
+        if(!name || !aadhar) return alert("Details bhariye");
         
         try {
             const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
             const data = await res.json();
-            if(data === "Not Found") return alert("No Data Found");
-            showForm(data);
-        } catch(e) { alert("Error connecting to server!"); }
+            if(data === "Not Found") return alert("Data nahi mila");
+            fillForm(data);
+        } catch(e) { alert("Server Error!"); }
     }
 
-    function showForm(data) {
+    function fillForm(data) {
         document.getElementById('search-box').style.display = "none";
         document.getElementById('preview-wrap').style.display = "block";
 
         document.getElementById('v-app').innerText = data["Application No"] || "";
-        document.getElementById('v-roll').innerText = data["Serial No. of Admission"] || "";
-        document.getElementById('v-date').innerText = data["Timestamp"] ? data["Timestamp"].split('T')[0] : "";
         document.getElementById('v-name').innerText = data["Name of Student"];
         document.getElementById('v-fname').innerText = data["Father's Name"];
         document.getElementById('v-mname').innerText = data["Mother's Name"];
@@ -144,18 +134,18 @@
         document.getElementById('v-caste').innerText = (data["Caste"] || "") + " / " + (data["Category"] || "");
         document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
         document.getElementById('v-mob').innerText = data["Mobile Number"];
-        document.getElementById('v-res').innerText = data["Permanent Residence"] || "";
+        document.getElementById('v-res').innerText = data["Permanent Residence"] || "N/A";
         document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"] || "";
         document.getElementById('v-class').innerText = data["Class in which admitted"];
         document.getElementById('v-tc').innerText = data["T.C No."] || "";
         document.getElementById('v-aholder').innerText = data["Account Holder Name"] || "";
-        document.getElementById('r-bank').innerText = data["Bank Name"] || "";
+        document.getElementById('v-bank').innerText = data["Bank Name"] || "";
         document.getElementById('v-acc').innerText = data["Bank Account Number"] || "";
         document.getElementById('v-ifsc').innerText = data["IFSC"] || "";
 
-        // Photo aur Sign loading
-        document.getElementById('v-photo').src = getPhotoUrl(data["Photo of Student"]);
-        document.getElementById('v-sign').src = getPhotoUrl(data["Signature"]);
+        // Images load kar raha hoon
+        document.getElementById('v-photo').src = forceLoadImage(data["Photo of Student"]);
+        document.getElementById('v-sign').src = forceLoadImage(data["Signature"]);
 
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 65, height: 65 });
