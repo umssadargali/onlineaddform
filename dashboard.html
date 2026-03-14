@@ -25,11 +25,14 @@
         .section-bar { background: #ddd; font-weight: bold; padding: 4px 10px; font-size: 12px; margin: 10px 0 5px 0; border: 1px solid #333; }
         .decl-box { font-size: 10.5px; margin-top: 12px; border-top: 1px solid #ccc; padding-top: 5px; line-height: 1.3; }
 
+        /* EXTRA PAGE FIX KARNE KE LIYE UPDATED CSS */
         @media print {
+            @page { size: A4; margin: 0; }
+            body { background: white; }
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; margin:0; border:none; }
-            .no-print { display: none; }
+            #printArea { position: absolute; left: 0; top: 0; width: 210mm; border: none; margin: 0; padding: 10mm; }
+            .no-print, .container { display: none !important; }
         }
     </style>
 </head>
@@ -116,6 +119,8 @@
 
     function renderPrint(d) {
         const printArea = document.getElementById('printArea');
+        printArea.innerHTML = ""; // DATA CLEAR LOGIC ADDED HERE
+        
         const appNo = d["Application No"] || d["Application Number"] || "N/A";
         
         printArea.innerHTML = `
@@ -180,7 +185,10 @@
                 <div><br><br>_________________<br>Principal's Signature</div>
             </div>
         `;
-        if(appNo !== "N/A") new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
+        if(appNo !== "N/A") {
+            document.getElementById("qrPrint").innerHTML = ""; // QR duplicate rokne ke liye
+            new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
+        }
     }
 
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
