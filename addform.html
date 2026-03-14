@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS - Final Success</title>
+    <title>IPS - Final Version</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         
-        /* Search Box */
         .search-area { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--p); }
         .search-area input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .btn-find { background: var(--p); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
         
-        /* Preview Area */
         #preview-wrap { display: none; padding-bottom: 50px; }
         .admit-card { 
             width: 210mm; min-height: 290mm; padding: 12mm; margin: 20px auto;
@@ -20,29 +18,27 @@
             position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
         
-        .header-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; line-height: 1.4; }
+        .header-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
         .school-info { text-align: center; margin-top: -10px; }
         .school-info h2 { color: #b71c1c; margin: 0; font-size: 22px; }
-        .school-info p { margin: 2px 0; font-size: 13px; font-weight: bold; }
         
         .qr-center { display: flex; justify-content: center; margin: 10px 0; }
-        .photo-frame { position: absolute; top: 12mm; right: 12mm; width: 32mm; height: 40mm; border: 1.5px solid #000; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-frame { position: absolute; top: 12mm; right: 12mm; width: 32mm; height: 40mm; border: 1.5px solid #000; background: #f0f0f0; }
+        .photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
         
         .section-bar { background: #e0e0e0; font-weight: bold; padding: 6px 10px; border: 1px solid #999; font-size: 13px; margin-top: 15px; }
         .info-table { width: 100%; border-collapse: collapse; }
         .info-table td { border: 1px solid #999; padding: 8px; font-size: 13px; width: 25%; }
         
         .footer-signs { margin-top: 60px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-        .sign-box { border-top: 1px solid #333; width: 50mm; text-align: center; padding-top: 5px; min-height: 40px; }
-        .sign-box img { height: 35px; width: auto; display: block; margin: 0 auto 5px auto; }
+        .sign-box { border-top: 1px solid #333; width: 50mm; text-align: center; padding-top: 5px; }
+        .sign-box img { height: 35px; width: auto; display: block; margin: 0 auto; }
 
         .action-footer { text-align: center; margin: 20px 0; }
-        .btn-save { background: #2d5a27; color: white; border: none; padding: 12px 35px; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-save:disabled { background: #888; cursor: wait; }
+        .btn-save { background: #2d5a27; color: white; border: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
         @media print {
-            .search-area, .action-footer, .btn-back { display: none !important; }
+            .search-area, .action-footer { display: none !important; }
             body { background: white; padding: 0; }
             .admit-card { margin: 0; border: none; box-shadow: none; width: 100%; }
             @page { size: portrait; margin: 0; }
@@ -56,18 +52,102 @@
     <input type="text" id="sName" placeholder="Student Full Name">
     <input type="number" id="sAadhar" placeholder="Aadhaar Number">
     <button class="btn-find" onclick="searchData()">FIND & PREVIEW</button>
-    <p id="load-status" style="display:none; text-align:center; color:orange; margin-top:10px;">Searching Database...</p>
+    <p id="load-status" style="display:none; text-align:center; color:orange; margin-top:10px;">Searching...</p>
 </div>
 
 <div id="preview-wrap">
     <div class="admit-card">
         <div class="header-top">
-            <div>
-                App No: <span id="v-app"></span><br>
-                Roll No: <span id="v-roll"></span><br>
-                Date: <span id="v-date"></span>
-            </div>
+            <div>App No: <span id="v-app"></span><br>Roll: <span id="v-roll"></span></div>
         </div>
-
         <div class="school-info">
             <h2>ALIGARH MUSLIM UNIVERSITY</h2>
+            <p><b>IQRA PUBLIC SCHOOL</b></p>
+            <div class="qr-center" id="qrcode"></div>
+        </div>
+
+        <div class="photo-frame"><img id="v-photo" src=""></div>
+
+        <div class="section-bar">STUDENT DETAILS</div>
+        <table class="info-table">
+            <tr><td><b>Name</b></td><td id="v-name"></td><td><b>Father</b></td><td id="v-fname"></td></tr>
+            <tr><td><b>Mother</b></td><td id="v-mname"></td><td><b>DOB</b></td><td id="v-dob"></td></tr>
+            <tr><td><b>Aadhaar</b></td><td id="v-aadhar"></td><td><b>Mobile</b></td><td id="v-mob"></td></tr>
+            <tr><td><b>Address</b></td><td colspan="3" id="v-res"></td></tr>
+        </table>
+
+        <div class="section-bar">ACADEMIC & OTHER</div>
+        <table class="info-table">
+            <tr><td><b>Prev. School</b></td><td colspan="3" id="v-pschool"></td></tr>
+            <tr><td><b>Admitted Class</b></td><td id="v-class"></td><td><b>Caste</b></td><td id="v-caste"></td></tr>
+        </table>
+
+        <div style="margin-top:40px; font-size:10px;">
+            <b>DECLARATION:</b> All information is true. Admission can be cancelled if found incorrect.
+        </div>
+
+        <div class="footer-signs">
+            <div class="sign-box"><img id="v-sign" src=""><br>Student Signature</div>
+            <div class="sign-box"><br>Principal Signature</div>
+        </div>
+    </div>
+
+    <div class="action-footer">
+        <button class="btn-save" onclick="window.print()">💾 SAVE AS PDF</button>
+        <p><a href="javascript:location.reload()">Search Again</a></p>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
+
+    function fixDriveUrl(url) {
+        if (url && url.includes('drive.google.com')) {
+            const id = url.match(/[-\w]{25,}/);
+            return id ? `https://drive.google.com/uc?export=view&id=${id}` : url;
+        }
+        return url;
+    }
+
+    async function searchData() {
+        const name = document.getElementById('sName').value.trim();
+        const aadhar = document.getElementById('sAadhar').value.trim();
+        if(!name || !aadhar) return alert("Fill Name and Aadhaar");
+        
+        document.getElementById('load-status').style.display = "block";
+        try {
+            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
+            const data = await res.json();
+            if(data === "Not Found") { alert("Not Found!"); } 
+            else { renderPreview(data); }
+        } catch(e) { alert("Error!"); }
+        document.getElementById('load-status').style.display = "none";
+    }
+
+    function renderPreview(data) {
+        document.getElementById('search-box').style.display = "none";
+        document.getElementById('preview-wrap').style.display = "block";
+
+        document.getElementById('v-app').innerText = data["Application No"] || "N/A";
+        document.getElementById('v-roll').innerText = data["Serial No. of Admission"] || "";
+        document.getElementById('v-name').innerText = data["Name of Student"];
+        document.getElementById('v-fname').innerText = data["Father's Name"];
+        document.getElementById('v-mname').innerText = data["Mother's Name"];
+        document.getElementById('v-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
+        document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
+        document.getElementById('v-mob').innerText = data["Mobile Number"];
+        document.getElementById('v-res').innerText = data["Permanent Residence"] || "N/A";
+        document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"] || "N/A";
+        document.getElementById('v-class').innerText = data["Class in which admitted"];
+        document.getElementById('v-caste').innerText = data["Caste"] || "";
+
+        // Direct source assignment (Better for Drive Links)
+        document.getElementById('v-photo').src = fixDriveUrl(data["Photo of Student"]);
+        document.getElementById('v-sign').src = fixDriveUrl(data["Signature"]);
+
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 70, height: 70 });
+    }
+</script>
+</body>
+</html>
