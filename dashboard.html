@@ -83,7 +83,6 @@
         try {
             const res = await fetch(scriptURL);
             const data = await res.json();
-            // Agar data list hai toh load karo, warna error handle karo
             if (Array.isArray(data)) {
                 allStudents = data;
                 renderTable(allStudents);
@@ -97,8 +96,8 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         data.forEach((s, index) => {
-            // Mapping fields as per your sheet headers
-            const appNo = s["Application No"] || "N/A";
+            // FIXED: Dono headers check kar raha hai (No. aur Number)
+            const appNo = s["Application No"] || s["Application Number"] || "N/A";
             const name = s["Name of Student"] || "N/A";
             const father = s["Father's Name"] || "N/A";
             const sClass = s["Class in which admitted"] || "N/A";
@@ -132,21 +131,28 @@
         const printArea = document.getElementById('printArea');
         
         modal.style.display = 'block';
-        printArea.innerHTML = "<h3 style='text-align:center;'>Loading Certificate...</h3>";
+        printArea.innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate & Photos...</h3>";
 
-        // Search call to get Base64 Photo/Sign
         try {
+            // FIXED: Hum Name aur Aadhar bhej rahe hain search ke liye
             const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(s["Name of Student"])}&searchAadhar=${s["Aadhaar Number"]}`);
             const fullData = await res.json();
-            renderPrint(fullData);
+            
+            if (fullData === "Not Found") {
+                renderPrint(s); // Agar naya data na mile toh purana hi dikha do
+            } else {
+                renderPrint(fullData); // Isme Base64 photo hogi
+            }
         } catch(e) {
-            alert("Error loading photo!");
+            console.error("Fetch Error:", e);
             renderPrint(s);
         }
     }
 
     function renderPrint(d) {
         const printArea = document.getElementById('printArea');
+        const appNo = d["Application No"] || d["Application Number"] || "N/A";
+        
         printArea.innerHTML = `
             <div class="p-head">
                 <h2 style="margin:0; color:#b71c1c;">ALIGARH MUSLIM UNIVERSITY</h2>
@@ -157,13 +163,13 @@
 
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div style="font-size:12px; line-height:1.8;">
-                    <b>Application Number:</b> ${d["Application No"] || 'N/A'}<br>
+                    <b>Application Number:</b> ${appNo}<br>
                     <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || 'N/A'}<br>
                     <b>Date of Admission:</b> ${d["Date of Admission"] || 'N/A'}
                 </div>
                 <div id="qrPrint"></div>
-                <div style="width:100px; height:120px; border:1px solid #000; background:#eee;">
-                    ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%;">` : 'No Photo'}
+                <div style="width:100px; height:120px; border:1px solid #000; background:#eee; display:flex; align-items:center; justify-content:center;">
+                    ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%; object-fit:cover;">` : '<span style="font-size:10px;">No Photo</span>'}
                 </div>
             </div>
 
@@ -177,7 +183,7 @@
 
             <div class="section-bar">CONTACT & ADDRESS</div>
             <table class="p-table">
-                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Residence"] || ''}</td></tr>
+                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Permanent Residence"] || d["Residence"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">ACADEMIC DETAILS</div>
@@ -195,12 +201,18 @@
             </table>
 
             <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
-                <div>${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100px; height:35px;">` : ''}<br>_________________<br>Student Signature</div>
+                <div style="width:120px;">
+                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:40px; object-fit:contain;">` : ''}
+                    <br>_________________<br>Student Signature
+                </div>
                 <div><br><br>_________________<br>Guardian's Signature</div>
                 <div><br><br>_________________<br>Principal's Signature</div>
             </div>
         `;
-        if(d["Application No"]) new QRCode(document.getElementById("qrPrint"), { text: d["Application No"], width: 60, height: 60 });
+        if(appNo !== "N/A") {
+            document.getElementById("qrPrint").innerHTML = "";
+            new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
+        }
     }
 
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
