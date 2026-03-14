@@ -96,8 +96,7 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         data.forEach((s, index) => {
-            // FIXED: Dono headers check kar raha hai (No. aur Number)
-            const appNo = s["Application No"] || s["Application Number"] || "N/A";
+            const appNo = s["Application No"] || s["Application Number"] || "Pending";
             const name = s["Name of Student"] || "N/A";
             const father = s["Father's Name"] || "N/A";
             const sClass = s["Class in which admitted"] || "N/A";
@@ -120,7 +119,7 @@
         const val = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allStudents.filter(s => 
             (s["Name of Student"] || "").toLowerCase().includes(val) || 
-            (s["Application No"] || "").toLowerCase().includes(val)
+            (String(s["Application No"] || "")).toLowerCase().includes(val)
         );
         renderTable(filtered);
     }
@@ -131,17 +130,19 @@
         const printArea = document.getElementById('printArea');
         
         modal.style.display = 'block';
-        printArea.innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate & Photos...</h3>";
+        printArea.innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate & Photo...</h3>";
 
         try {
-            // FIXED: Hum Name aur Aadhar bhej rahe hain search ke liye
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(s["Name of Student"])}&searchAadhar=${s["Aadhaar Number"]}`);
+            // PHOTO FIX: Base64 data fetch karne ke liye script ko student ka name aur aadhar bhej rahe hain
+            const nameParam = encodeURIComponent(s["Name of Student"]);
+            const aadharParam = s["Aadhaar Number"] || "";
+            const res = await fetch(`${scriptURL}?searchName=${nameParam}&searchAadhar=${aadharParam}`);
             const fullData = await res.json();
             
-            if (fullData === "Not Found") {
-                renderPrint(s); // Agar naya data na mile toh purana hi dikha do
+            if (fullData === "Not Found" || typeof fullData === 'string') {
+                renderPrint(s); // Agar server se photo na mile toh basic data dikhao
             } else {
-                renderPrint(fullData); // Isme Base64 photo hogi
+                renderPrint(fullData); // Isme Photo aur Signature Base64 mein honge
             }
         } catch(e) {
             console.error("Fetch Error:", e);
@@ -151,6 +152,7 @@
 
     function renderPrint(d) {
         const printArea = document.getElementById('printArea');
+        // App Number fallback
         const appNo = d["Application No"] || d["Application Number"] || "N/A";
         
         printArea.innerHTML = `
@@ -164,11 +166,11 @@
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div style="font-size:12px; line-height:1.8;">
                     <b>Application Number:</b> ${appNo}<br>
-                    <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || 'N/A'}<br>
-                    <b>Date of Admission:</b> ${d["Date of Admission"] || 'N/A'}
+                    <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || '---'}<br>
+                    <b>Date of Admission:</b> ${d["Date of Admission"] || '---'}
                 </div>
                 <div id="qrPrint"></div>
-                <div style="width:100px; height:120px; border:1px solid #000; background:#eee; display:flex; align-items:center; justify-content:center;">
+                <div style="width:105px; height:125px; border:1px solid #000; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden;">
                     ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%; object-fit:cover;">` : '<span style="font-size:10px;">No Photo</span>'}
                 </div>
             </div>
@@ -191,7 +193,6 @@
                 <tr><td class="sh">Previous School</td><td colspan="3">${d["Name & Place of Previous School"] || ''}</td></tr>
                 <tr><td class="sh">Reading Class</td><td>${d["Class in which reading"] || ''}</td><td class="sh">TC No</td><td>${d["T.C No."] || ''}</td></tr>
                 <tr><td class="sh">TC Date</td><td>${d["Date of T.C"] || ''}</td><td class="sh">Admitted Class</td><td>${d["Class in which admitted"] || ''}</td></tr>
-                <tr><td class="sh">Leaving Date</td><td colspan="3">${d["Date of leaving the School"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">BANK DETAILS</div>
@@ -201,8 +202,8 @@
             </table>
 
             <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
-                <div style="width:120px;">
-                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:40px; object-fit:contain;">` : ''}
+                <div style="width:130px;">
+                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:45px; object-fit:contain;">` : ''}
                     <br>_________________<br>Student Signature
                 </div>
                 <div><br><br>_________________<br>Guardian's Signature</div>
