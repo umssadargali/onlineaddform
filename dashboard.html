@@ -64,7 +64,20 @@
 
     window.onload = fetchList;
 
-    // Image Link Fixer (The Magic Formula)
+    // --- DATE FORMATTING FUNCTION ---
+    function formatDate(dateString) {
+        if (!dateString || dateString === "---") return "---";
+        const date = new Date(dateString);
+        if (isNaN(date)) return dateString; 
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+
+        return `${day}-${month}-${year}`; // dd-mm-yyyy format
+    }
+
+    // Image Link Fixer
     function formatImg(url) {
         if (!url) return "";
         if (url.includes("data:image")) return url;
@@ -117,7 +130,7 @@
                 <div style="font-size:12px; line-height:1.6;">
                     <b>Application Number:</b> ${appNo}<br>
                     <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || '---'}<br>
-                    <b>Date of Admission:</b> ${d["Date of Admission"] || '---'}
+                    <b>Date of Admission:</b> ${formatDate(d["Date of Admission"])}
                 </div>
                 <div id="qrPrint"></div>
                 <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden; background:#f0f0f0; display:flex; align-items:center; justify-content:center;">
@@ -128,7 +141,7 @@
             <div class="section-bar">PERSONAL DETAILS</div>
             <table class="p-table">
                 <tr><td class="sh">Student Name</td><td>${d['Name of Student'] || ''}</td><td class="sh">Father's Name</td><td>${d["Father's Name"] || ''}</td></tr>
-                <tr><td class="sh">Mother's Name</td><td>${d["Mother's Name"] || ''}</td><td class="sh">Date of Birth</td><td>${d["Date of Birth"] || ''}</td></tr>
+                <tr><td class="sh">Mother's Name</td><td>${d["Mother's Name"] || ''}</td><td class="sh">Date of Birth</td><td>${formatDate(d["Date of Birth"])}</td></tr>
                 <tr><td class="sh">Caste</td><td>${d["Caste"] || ''}</td><td class="sh">Category</td><td>${d["Category"] || ''}</td></tr>
                 <tr><td class="sh">Aadhaar Number</td><td colspan="3">${d["Aadhaar Number"] || ''}</td></tr>
             </table>
@@ -142,7 +155,7 @@
             <table class="p-table">
                 <tr><td class="sh">Previous School</td><td colspan="3">${d["Name & Place of Previous School"] || ''}</td></tr>
                 <tr><td class="sh">Reading Class</td><td>${d["Class in which reading"] || ''}</td><td class="sh">TC No</td><td>${d["T.C No."] || ''}</td></tr>
-                <tr><td class="sh">TC Date</td><td>${d["Date of T.C"] || ''}</td><td class="sh">Admitted Class</td><td>${d["Class in which admitted"] || ''}</td></tr>
+                <tr><td class="sh">TC Date</td><td>${formatDate(d["Date of T.C"])}</td><td class="sh">Admitted Class</td><td>${d["Class in which admitted"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">BANK DETAILS</div>
