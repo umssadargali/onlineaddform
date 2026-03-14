@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS - Final Preview</title>
+    <title>IPS - Final Success</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
@@ -26,7 +26,7 @@
         .school-info p { margin: 2px 0; font-size: 13px; font-weight: bold; }
         
         .qr-center { display: flex; justify-content: center; margin: 10px 0; }
-        .photo-frame { position: absolute; top: 12mm; right: 12mm; width: 32mm; height: 40mm; border: 1.5px solid #000; background: #f9f9f9; }
+        .photo-frame { position: absolute; top: 12mm; right: 12mm; width: 32mm; height: 40mm; border: 1.5px solid #000; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
         
         .section-bar { background: #e0e0e0; font-weight: bold; padding: 6px 10px; border: 1px solid #999; font-size: 13px; margin-top: 15px; }
@@ -34,22 +34,16 @@
         .info-table td { border: 1px solid #999; padding: 8px; font-size: 13px; width: 25%; }
         
         .footer-signs { margin-top: 60px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-        .sign-box { border-top: 1px solid #333; width: 50mm; text-align: center; padding-top: 5px; }
-        .sign-box img { height: 35px; margin-bottom: 2px; }
+        .sign-box { border-top: 1px solid #333; width: 50mm; text-align: center; padding-top: 5px; min-height: 40px; }
+        .sign-box img { height: 35px; width: auto; display: block; margin: 0 auto 5px auto; }
 
-        /* Save Button Styling */
         .action-footer { text-align: center; margin: 20px 0; }
-        .btn-save { 
-            background: #2d5a27; color: white; border: none; padding: 15px 40px; 
-            border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.3s;
-        }
-        .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-save { background: #2d5a27; color: white; border: none; padding: 12px 35px; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-save:disabled { background: #888; cursor: wait; }
 
-        /* Print Logic: Hides everything except the card */
         @media print {
-            body { background: white; padding: 0; }
             .search-area, .action-footer, .btn-back { display: none !important; }
+            body { background: white; padding: 0; }
             .admit-card { margin: 0; border: none; box-shadow: none; width: 100%; }
             @page { size: portrait; margin: 0; }
         }
@@ -58,15 +52,15 @@
 <body>
 
 <div class="search-area" id="search-box">
-    <h2 style="text-align:center; color:var(--p); margin-bottom:20px;">IPS Portal</h2>
-    <input type="text" id="sName" placeholder="Student Name (Exactly as registered)">
+    <h2 style="text-align:center; color:var(--p); margin:0 0 20px 0;">IPS Portal</h2>
+    <input type="text" id="sName" placeholder="Student Full Name">
     <input type="number" id="sAadhar" placeholder="Aadhaar Number">
-    <button class="btn-find" onclick="searchData()">VIEW ADMISSION FORM</button>
-    <p id="load-status" style="display:none; text-align:center; color:orange; font-weight:bold;">Fetching Record...</p>
+    <button class="btn-find" onclick="searchData()">FIND & PREVIEW</button>
+    <p id="load-status" style="display:none; text-align:center; color:orange; margin-top:10px;">Searching Database...</p>
 </div>
 
 <div id="preview-wrap">
-    <div class="admit-card" id="print-area">
+    <div class="admit-card">
         <div class="header-top">
             <div>
                 App No: <span id="v-app"></span><br>
@@ -77,133 +71,3 @@
 
         <div class="school-info">
             <h2>ALIGARH MUSLIM UNIVERSITY</h2>
-            <p>IQRA PUBLIC SCHOOL</p>
-            <div style="font-size:11px;">Session: 2026-27 | Admission Form</div>
-            <div class="qr-center" id="qrcode"></div>
-        </div>
-
-        <div class="photo-frame">
-            <img id="v-photo" src="" alt="Student Photo">
-        </div>
-
-        <div class="section-bar">PERSONAL DETAILS</div>
-        <table class="info-table">
-            <tr><td><b>Student Name</b></td><td id="v-name"></td><td><b>Father's Name</b></td><td id="v-fname"></td></tr>
-            <tr><td><b>Mother's Name</b></td><td id="v-mname"></td><td><b>Date of Birth</b></td><td id="v-dob"></td></tr>
-            <tr><td><b>Caste</b></td><td id="v-caste"></td><td><b>Category</b></td><td id="v-cat"></td></tr>
-            <tr><td><b>Aadhaar</b></td><td colspan="3" id="v-aadhar"></td></tr>
-        </table>
-
-        <div class="section-bar">CONTACT & ADDRESS</div>
-        <table class="info-table">
-            <tr><td><b>Mobile Number</b></td><td id="v-mob"></td><td><b>Residence</b></td><td id="v-res"></td></tr>
-        </table>
-
-        <div class="section-bar">ACADEMIC DETAILS</div>
-        <table class="info-table">
-            <tr><td><b>Previous School</b></td><td colspan="3" id="v-pschool"></td></tr>
-            <tr><td><b>TC No</b></td><td id="v-tc"></td><td><b>Admitted Class</b></td><td id="v-class"></td></tr>
-        </table>
-
-        <div style="margin-top:30px; font-size:11px; border: 1px dashed #999; padding: 10px;">
-            <b>DECLARATION:</b><br>
-            1. I undertake to abide by all the school rules and regulations.<br>
-            2. All information provided above is true to the best of my knowledge.<br>
-            3. Admission stands cancelled if any documents are found fraudulent.
-        </div>
-
-        <div class="footer-signs">
-            <div class="sign-box">
-                <img id="v-sign" src=""><br>Student Signature
-            </div>
-            <div class="sign-box" style="border:none;"></div> <div class="sign-box"><br>Principal Signature</div>
-        </div>
-    </div>
-
-    <div class="action-footer">
-        <button class="btn-save" id="btn-save" onclick="window.print()" disabled>
-            ⌛ WAITING FOR IMAGES...
-        </button>
-        <br><br>
-        <button onclick="location.reload()" style="background:none; border:none; color:blue; cursor:pointer;">← Search Another Student</button>
-    </div>
-</div>
-
-<script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
-
-    async function searchData() {
-        const name = document.getElementById('sName').value.trim();
-        const aadhar = document.getElementById('sAadhar').value.trim();
-        const status = document.getElementById('load-status');
-        
-        if(!name || !aadhar) return alert("Please enter Name and Aadhaar");
-        
-        status.style.display = "block";
-        
-        try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
-            const data = await res.json();
-            
-            if(data === "Not Found") {
-                alert("Student Record Not Found!");
-            } else {
-                renderPreview(data);
-            }
-        } catch(e) { alert("Server Error! Please try again."); }
-        status.style.display = "none";
-    }
-
-    function renderPreview(data) {
-        document.getElementById('search-box').style.display = "none";
-        document.getElementById('preview-wrap').style.display = "block";
-
-        // Mapping Data
-        document.getElementById('v-app').innerText = data["Application No"] || "N/A";
-        document.getElementById('v-roll').innerText = data["Serial No. of Admission"] || "Pending";
-        document.getElementById('v-date').innerText = data["Timestamp"] ? data["Timestamp"].split('T')[0] : "N/A";
-        document.getElementById('v-name').innerText = data["Name of Student"];
-        document.getElementById('v-fname').innerText = data["Father's Name"];
-        document.getElementById('v-mname').innerText = data["Mother's Name"];
-        document.getElementById('v-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
-        document.getElementById('v-caste').innerText = data["Caste"] || "N/A";
-        document.getElementById('v-cat').innerText = data["Category"] || "N/A";
-        document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
-        document.getElementById('v-mob').innerText = data["Mobile Number"];
-        document.getElementById('v-res').innerText = data["Permanent Residence"] || "N/A";
-        document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"] || "N/A";
-        document.getElementById('v-tc').innerText = data["T.C No."] || "N/A";
-        document.getElementById('v-class').innerText = data["Class in which admitted"];
-
-        // Image Loading Logic with Verification
-        const photoImg = document.getElementById('v-photo');
-        const signImg = document.getElementById('v-sign');
-        const saveBtn = document.getElementById('btn-save');
-        
-        let photoLoaded = false;
-        let signLoaded = false;
-
-        function checkReady() {
-            if(photoLoaded && signLoaded) {
-                saveBtn.disabled = false;
-                saveBtn.innerText = "💾 SAVE AS PDF";
-            }
-        }
-
-        photoImg.onload = () => { photoLoaded = true; checkReady(); };
-        signImg.onload = () => { signLoaded = true; checkReady(); };
-        
-        // Handle if images fail to load
-        photoImg.onerror = () => { photoLoaded = true; checkReady(); photoImg.alt="No Photo"; };
-        signImg.onerror = () => { signLoaded = true; checkReady(); };
-
-        photoImg.src = data["Photo of Student"] || "";
-        signImg.src = data["Signature"] || "";
-
-        // QR Code
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 80, height: 80 });
-    }
-</script>
-</body>
-</html>
