@@ -41,7 +41,7 @@
     <button class="btn" id="searchBtn" onclick="search()">FIND & DOWNLOAD PDF</button>
     <button class="btn btn-save" id="saveBtn" onclick="downloadLastPDF()">SAVE PDF MANUALLY</button>
     
-    <p id="msg">Processing... Please wait.</p>
+    <p id="msg">Processing Record... Please wait.</p>
 </div>
 
 <script>
@@ -54,13 +54,12 @@
         return val;
     }
 
-    // Google Drive Link Fix (Stronger Method)
+    // Google Drive Image Link Converter
     function getDirectUrl(url) {
         if (!url || typeof url !== 'string') return "";
         if (url.includes("drive.google.com")) {
             const id = url.match(/[-\w]{25,}/);
-            // Method: Use export=download for better compatibility with jsPDF
-            return id ? `https://drive.google.com/uc?export=download&id=${id}` : url;
+            return id ? `https://drive.google.com/uc?export=view&id=${id}` : url;
         }
         return url;
     }
@@ -72,7 +71,7 @@
         const msg = document.getElementById('msg');
         const btn = document.getElementById('searchBtn');
 
-        if(!name || !aadhar) return alert("Please fill Name and Aadhaar Number");
+        if(!name || !aadhar) return alert("Please fill Name and Aadhaar");
 
         msg.style.display = "block";
         btn.disabled = true;
@@ -109,21 +108,21 @@
         doc.setLineWidth(0.4);
         doc.rect(5, 5, 200, 287);
         
-        // Header
+        // Header Section
         doc.setFontSize(7); doc.setFont("helvetica", "bold");
-        doc.text("Application Number: " + (data["Application No"] || "N/A"), 10, 10);
-        doc.text("Serial No of Admission: " + (data["Serial No. of Admission"] || ""), 10, 13);
-        doc.text("Date of Admission: " + formatDate(data["Timestamp"]), 10, 16);
+        doc.text("Application No: " + (data["Application No"] || "N/A"), 10, 10);
+        doc.text("Roll No: " + (data["Serial No. of Admission"] || ""), 10, 13);
+        doc.text("Date: " + formatDate(data["Timestamp"]), 10, 16);
 
-        doc.setFontSize(13); doc.setTextColor(183, 28, 28);
+        doc.setFontSize(14); doc.setTextColor(183, 28, 28);
         doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 14, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("Session : 2026-27", 105, 18, {align:'center'});
-        doc.text("IQRA PUBLIC SCHOOL", 105, 23, {align:'center'});
+        doc.text("Session : 2026-27", 105, 19, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 24, {align:'center'});
         doc.setFontSize(8); doc.setFont("helvetica", "normal");
-        doc.text("Application Form for Admission", 105, 27, {align:'center'});
+        doc.text("Application Form for Admission", 105, 28, {align:'center'});
 
-        // Asynchronous Image Loading
+        // Image Loading Function (Improved)
         const addImg = (url, x, y, w, h) => {
             return new Promise((resolve) => {
                 if(!url) return resolve();
@@ -133,26 +132,23 @@
                     try { doc.addImage(this, 'JPEG', x, y, w, h); } catch(e){}
                     resolve();
                 };
-                img.onerror = () => {
-                    console.log("Failed to load: " + url);
-                    resolve();
-                };
+                img.onerror = () => resolve();
                 img.src = getDirectUrl(url);
             });
         };
 
-        // Photo Loading
+        // Photo
         doc.rect(165, 10, 30, 38); 
         await addImg(data["Photo of Student"] || data["photoData"], 165, 10, 30, 38);
 
         // QR Code
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
-        const qrCanvas = await new Promise(r => setTimeout(() => r(qrDiv.querySelector('canvas')), 600));
-        if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 94, 30, 18, 18);
+        const qrCanvas = await new Promise(r => setTimeout(() => r(qrDiv.querySelector('canvas')), 700));
+        if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 32, 20, 20);
 
-        // Grid Layout (Including Address & Contact)
-        let y = 55; 
+        // Grid Sections
+        let y = 58; 
         const sections = [
             { title: "PERSONAL DETAILS", fields: [
                 ["Student Name", data["Name of Student"]], ["Father's Name", data["Father's Name"]],
@@ -165,7 +161,7 @@
             ]},
             { title: "ACADEMIC DETAILS", fields: [
                 ["Previous School", data["Name & Place of Previous School"]], ["TC No", data["T.C No."]],
-                ["Reading Class", data["Class in which reading"]], ["Admitted Class", data["Class in which admitted"]]
+                ["Admitted Class", data["Class in which admitted"]], ["Reading Class", data["Class in which reading"]]
             ]},
             { title: "BANK DETAILS", fields: [
                 ["Account Holder", data["Account Holder's Name"]], ["Bank Name", data["Bank Name"]],
@@ -180,26 +176,26 @@
             y += 5;
             for(let i=0; i<sec.fields.length; i+=2) {
                 let f1 = sec.fields[i], f2 = sec.fields[i+1];
-                doc.setDrawColor(180); doc.rect(10, y, 95, 6.5); 
-                if(f2) doc.rect(105, y, 95, 6.5);
+                doc.setDrawColor(180); doc.rect(10, y, 95, 7); 
+                if(f2) doc.rect(105, y, 95, 7);
                 doc.setFont("helvetica", "bold"); doc.text(f1[0] + ":", 12, y + 4.5);
                 doc.setFont("helvetica", "normal"); doc.text(String(f1[1] || "N/A"), 40, y + 4.5);
                 if(f2) {
                     doc.setFont("helvetica", "bold"); doc.text(f2[0] + ":", 107, y + 4.5);
                     doc.setFont("helvetica", "normal"); doc.text(String(f2[1] || "N/A"), 135, y + 4.5);
                 }
-                y += 6.5;
+                y += 7;
             }
-            y += 2;
+            y += 3;
         });
 
         // Declaration
         y = 245;
         doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
         doc.setFont("helvetica", "normal");
-        doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 3.5);
-        doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 6.5);
-        doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 9.5);
+        doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 4);
+        doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 7);
+        doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 10);
 
         // Signatures
         y = 280;
