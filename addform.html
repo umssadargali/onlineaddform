@@ -1,134 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Admission Final</title>
+    <title>IPS Portal - Final Stable</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        
         .search-area { max-width: 400px; margin: 20px auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--p); text-align: center; }
         .search-area input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .btn-find { background: var(--p); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
         #preview-wrap { display: none; }
-        .admit-card { width: 210mm; min-height: 295mm; padding: 10mm; margin: 20px auto; background: white; border: 1px solid #000; box-sizing: border-box; position: relative; font-size: 12px; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h2 { color: #b71c1c; margin: 0; font-size: 20px; }
-        .photo-box { position: absolute; top: 10mm; right: 10mm; width: 35mm; height: 45mm; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fafafa; }
-        .photo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .admit-card { width: 210mm; min-height: 295mm; padding: 10mm; margin: 10px auto; background: white; border: 1px solid #000; box-sizing: border-box; position: relative; font-size: 12px; }
+        
+        .header { text-align: center; margin-bottom: 15px; }
+        .header h2 { color: #b71c1c; margin: 0; font-size: 20px; text-transform: uppercase; }
+        .header p { margin: 2px 0; font-weight: bold; }
+        
+        /* Photo Frame wahi purana */
+        .photo-box { position: absolute; top: 10mm; right: 10mm; width: 35mm; height: 45mm; border: 1.5px solid #000; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .photo-box img { max-width: 100%; max-height: 100%; object-fit: cover; }
+        
         .section-head { background: #e0e0e0; font-weight: bold; padding: 5px 10px; border: 1px solid #000; margin-top: 10px; }
         .data-table { width: 100%; border-collapse: collapse; }
-        .data-table td { border: 1px solid #000; padding: 6px; width: 25%; }
-        .footer-signs { margin-top: 60px; display: flex; justify-content: space-between; }
-        .sign-item { border-top: 1px solid #000; width: 60mm; text-align: center; padding-top: 5px; }
+        .data-table td { border: 1px solid #000; padding: 6px; width: 25%; font-size: 11px; }
+        
+        .footer-signs { margin-top: 50px; display: flex; justify-content: space-between; font-weight: bold; }
+        .sign-item { border-top: 1px solid #000; width: 55mm; text-align: center; padding-top: 5px; }
         .sign-item img { height: 35px; display: block; margin: 0 auto 5px auto; }
+
         .btn-save { background: #2d5a27; color: white; border: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; display: block; margin: 20px auto; }
-        @media print { .search-area, .btn-save, #back-link { display: none !important; } .admit-card { margin: 0; border: none; width: 100%; } }
+        .btn-save:disabled { background: #ccc; cursor: not-allowed; }
+
+        @media print {
+            .search-area, .btn-save, #back-link { display: none !important; }
+            .admit-card { margin: 0; border: none; width: 100%; }
+        }
     </style>
 </head>
 <body>
 
 <div class="search-area" id="search-box">
-    <h3>IQRA PUBLIC SCHOOL</h3>
-    <input type="text" id="sName" placeholder="Student Full Name">
+    <h3 style="color:var(--p); margin:0 0 15px 0;">IQRA PUBLIC SCHOOL</h3>
+    <input type="text" id="sName" placeholder="Full Student Name">
     <input type="number" id="sAadhar" placeholder="Aadhaar Number">
-    <button class="btn-find" onclick="searchData()">SEARCH & PREVIEW</button>
+    <button class="btn-find" onclick="searchData()">SEARCH RECORD</button>
 </div>
 
 <div id="preview-wrap">
-    <div class="admit-card" id="form-content">
+    <div class="admit-card">
         <div style="font-size: 10px; font-weight: bold;">
-            App No: <span id="v-app"></span> | Roll No: <span id="v-roll"></span> | Date: <span id="v-date"></span>
+            Application No: <span id="v-app"></span> | Roll No: <span id="v-roll"></span> | Date: <span id="v-date"></span>
         </div>
+        
         <div class="header">
             <h2>ALIGARH MUSLIM UNIVERSITY</h2>
-            <p>IQRA PUBLIC SCHOOL (2026-27)</p>
+            <p>Session: 2026-27 | Admission Form</p>
+            <p>IQRA PUBLIC SCHOOL</p>
             <div id="qrcode" style="display: flex; justify-content: center; margin-top: 5px;"></div>
         </div>
-        <div class="photo-box"><img id="v-photo" src="" alt="Photo Loading..."></div>
+
+        <div class="photo-box"><img id="v-photo" src="" alt="Photo Ready"></div>
+
         <div class="section-head">PERSONAL DETAILS</div>
         <table class="data-table">
-            <tr><td><b>Student:</b></td><td id="v-name"></td><td><b>Father:</b></td><td id="v-fname"></td></tr>
-            <tr><td><b>Mother:</b></td><td id="v-mname"></td><td><b>DOB:</b></td><td id="v-dob"></td></tr>
-            <tr><td><b>Caste/Cat:</b></td><td id="v-caste"></td><td><b>Aadhaar:</b></td><td id="v-aadhar"></td></tr>
+            <tr><td><b>Student Name:</b></td><td id="v-name"></td><td><b>Father's Name:</b></td><td id="v-fname"></td></tr>
+            <tr><td><b>Mother's Name:</b></td><td id="v-mname"></td><td><b>Date of Birth:</b></td><td id="v-dob"></td></tr>
+            <tr><td><b>Caste:</b></td><td id="v-caste"></td><td><b>Category:</b></td><td id="v-cat"></td></tr>
+            <tr><td><b>Aadhaar Number:</b></td><td colspan="3" id="v-aadhar"></td></tr>
         </table>
-        <div class="section-head">ACADEMIC & CONTACT</div>
+
+        <div class="section-head">CONTACT & ADDRESS</div>
         <table class="data-table">
-            <tr><td><b>Mobile:</b></td><td id="v-mob"></td><td><b>Residence:</b></td><td id="v-res"></td></tr>
-            <tr><td><b>Prev School:</b></td><td colspan="3" id="v-pschool"></td></tr>
-            <tr><td><b>Class:</b></td><td id="v-class"></td><td><b>TC No:</b></td><td id="v-tc"></td></tr>
+            <tr><td><b>Mobile No:</b></td><td id="v-mob"></td><td><b>Residence:</b></td><td id="v-res"></td></tr>
         </table>
+
+        <div class="section-head">ACADEMIC DETAILS</div>
+        <table class="data-table">
+            <tr><td><b>Prev School:</b></td><td colspan="3" id="v-pschool"></td></tr>
+            <tr><td><b>TC No:</b></td><td id="v-tc"></td><td><b>Reading Class:</b></td><td id="v-rclass"></td></tr>
+            <tr><td><b>Admitted Class:</b></td><td colspan="3" id="v-class"></td></tr>
+        </table>
+
         <div class="section-head">BANK DETAILS</div>
         <table class="data-table">
-            <tr><td><b>Holder:</b></td><td id="v-aholder"></td><td><b>Bank:</b></td><td id="v-bname"></td></tr>
-            <tr><td><b>A/C No:</b></td><td id="v-acc"></td><td><b>IFSC:</b></td><td id="v-ifsc"></td></tr>
+            <tr><td><b>Holder Name:</b></td><td id="v-aholder"></td><td><b>Bank Name:</b></td><td id="v-bname"></td></tr>
+            <tr><td><b>A/C Number:</b></td><td id="v-acc"></td><td><b>IFSC Code:</b></td><td id="v-ifsc"></td></tr>
         </table>
+
+        <div style="margin-top:30px; font-size:10px; line-height:1.4;">
+            <b>DECLARATION:</b> 1. I abide by all rules. 2. Entries are true. 3. Admission may be cancelled if incorrect.
+        </div>
+
         <div class="footer-signs">
             <div class="sign-item"><img id="v-sign" src=""><br>Student Signature</div>
+            <div class="sign-item"><br>Guardian Signature</div>
             <div class="sign-item"><br>Principal Signature</div>
         </div>
     </div>
-    <button id="save-btn" class="btn-save" onclick="window.print()" disabled>WAITING FOR PHOTO...</button>
-    <center id="back-link"><a href="javascript:location.reload()">Back to Search</a></center>
+
+    <button id="save-btn" class="btn-save" onclick="window.print()">💾 SAVE AS PDF</button>
+    <center id="back-link"><a href="javascript:location.reload()" style="font-size:12px; color:blue;">Search Again</a></center>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
-    function getDriveUrl(url) {
+    // Same Proxy logic for photo
+    function fixImg(url) {
         if (!url) return "";
         const id = url.match(/[-\w]{25,}/);
-        return id ? `https://lh3.googleusercontent.com/d/${id}` : url;
+        return id ? `https://drive.google.com/uc?export=view&id=${id}` : url;
     }
 
     async function searchData() {
         const name = document.getElementById('sName').value;
         const aadhar = document.getElementById('sAadhar').value;
-        if(!name || !aadhar) return alert("Details bhariye");
+        if(!name || !aadhar) return alert("Please fill Name and Aadhaar");
         
         try {
             const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
             const data = await res.json();
-            if(data === "Not Found") return alert("Data nahi mila");
+            if(data === "Not Found") return alert("No Record Found!");
             
-            showPreview(data);
-        } catch(e) { alert("Error loading data!"); }
+            fillPreview(data);
+        } catch(e) { alert("Server connection error!"); }
     }
 
-    function showPreview(data) {
+    function fillPreview(data) {
         document.getElementById('search-box').style.display = "none";
         document.getElementById('preview-wrap').style.display = "block";
 
-        document.getElementById('v-app').innerText = data["Application No"] || "N/A";
+        document.getElementById('v-app').innerText = data["Application No"] || "";
         document.getElementById('v-roll').innerText = data["Serial No. of Admission"] || "";
         document.getElementById('v-date').innerText = data["Timestamp"] ? data["Timestamp"].split('T')[0] : "";
         document.getElementById('v-name').innerText = data["Name of Student"];
         document.getElementById('v-fname').innerText = data["Father's Name"];
         document.getElementById('v-mname').innerText = data["Mother's Name"];
         document.getElementById('v-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
-        document.getElementById('v-caste').innerText = (data["Caste"] || "") + " / " + (data["Category"] || "");
+        document.getElementById('v-caste').innerText = data["Caste"] || "";
+        document.getElementById('v-cat').innerText = data["Category"] || "";
         document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
         document.getElementById('v-mob').innerText = data["Mobile Number"];
         document.getElementById('v-res').innerText = data["Permanent Residence"] || "";
         document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"] || "";
-        document.getElementById('v-class').innerText = data["Class in which admitted"];
+        document.getElementById('v-rclass').innerText = data["Class in which reading"] || "";
         document.getElementById('v-tc').innerText = data["T.C No."] || "";
+        document.getElementById('v-class').innerText = data["Class in which admitted"];
         document.getElementById('v-aholder').innerText = data["Account Holder Name"] || "";
         document.getElementById('v-bname').innerText = data["Bank Name"] || "";
         document.getElementById('v-acc').innerText = data["Bank Account Number"] || "";
         document.getElementById('v-ifsc').innerText = data["IFSC"] || "";
 
-        const photoImg = document.getElementById('v-photo');
-        const signImg = document.getElementById('v-sign');
-        const saveBtn = document.getElementById('save-btn');
-
-        // This ensures the button only works when photo is ready
-        photoImg.onload = () => { 
-            saveBtn.disabled = false; 
-            saveBtn.innerText = "💾 SAVE AS PDF"; 
-        };
-        
-        photoImg.src = getDriveUrl(data["Photo of Student"]);
-        signImg.src = getDriveUrl(data["Signature"]);
+        // Setting images
+        document.getElementById('v-photo').src = fixImg(data["Photo of Student"]);
+        document.getElementById('v-sign').src = fixImg(data["Signature"]);
 
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 60, height: 60 });
