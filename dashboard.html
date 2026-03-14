@@ -23,7 +23,7 @@
         .p-table td { border: 1px solid #ccc; padding: 7px 10px; font-size: 12.5px; }
         .sh { background: #f0f0f0; font-weight: bold; width: 22%; }
         .section-bar { background: #e9e9e9; font-weight: bold; padding: 5px 10px; font-size: 13px; margin: 15px 0 5px 0; border: 1px solid #333; }
-        .declaration-box { font-size: 11px; margin-top: 15px; padding: 10px; border: 1px solid #eee; background: #fffcf0; }
+        .decl-box { font-size: 11px; margin-top: 15px; border: 1px solid #eee; padding: 8px; background: #fffcf0; line-height: 1.4; }
         
         @media print {
             body * { visibility: hidden; }
@@ -89,22 +89,17 @@
 
     async function viewStudent(index) {
         const s = allStudents[index];
-        document.getElementById('modal').style.display = 'block';
-        document.getElementById('printArea').innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate...</h3>";
+        const modal = document.getElementById('modal');
+        modal.style.display = 'block';
+        document.getElementById('printArea').innerHTML = "<h3 style='text-align:center; padding-top:100px;'>Loading Certificate & Student Photo...</h3>";
 
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(s["Name of Student"])}&searchAadhar=${s["Aadhaar Number"]}`);
+            // Hum name aur aadhar bhej kar server se Base64 photo mangwa rahe hain
+            const nameParam = encodeURIComponent(s["Name of Student"]);
+            const res = await fetch(`${scriptURL}?searchName=${nameParam}&searchAadhar=${s["Aadhaar Number"]}`);
             const fullData = await res.json();
             renderPrint(fullData === "Not Found" ? s : fullData);
         } catch(e) { renderPrint(s); }
-    }
-
-    // Google Drive Link ko bypass karne ke liye function
-    function fixDriveLink(url) {
-        if (!url) return '';
-        if (url.startsWith('data:image')) return url; // Already Base64
-        const id = url.match(/[-\w]{25,}/);
-        return id ? `https://lh3.googleusercontent.com/d/${id[0]}=s500` : url;
     }
 
     function renderPrint(d) {
@@ -119,15 +114,15 @@
                 <p style="font-weight:bold; margin:5px 0;">Application Form for Admission</p>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
                 <div style="font-size:12px; line-height:1.8;">
                     <b>Application Number:</b> ${appNo}<br>
                     <b>Serial No of Admission:</b> ${d["Serial No. of Admission"] || '---'}<br>
                     <b>Date of Admission:</b> ${d["Date of Admission"] || '---'}
                 </div>
                 <div id="qrPrint"></div>
-                <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden;">
-                    <img src="${fixDriveLink(d["Photo of Student"])}" style="width:100%;height:100%; object-fit:cover;" onerror="this.style.display='none'">
+                <div style="width:105px; height:125px; border:1px solid #000; overflow:hidden; background:#f9f9f9; display:flex; align-items:center; justify-content:center;">
+                    ${d["Photo of Student"] ? `<img src="${d["Photo of Student"]}" style="width:100%;height:100%; object-fit:cover;">` : '<span style="font-size:10px;">PHOTO</span>'}
                 </div>
             </div>
 
@@ -141,7 +136,7 @@
 
             <div class="section-bar">CONTACT & ADDRESS</div>
             <table class="p-table">
-                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Residence"] || d["Residence"] || ''}</td></tr>
+                <tr><td class="sh">Mobile Number</td><td>${d["Mobile Number"] || ''}</td><td class="sh">Residence</td><td>${d["Permanent Residence"] || d["Residence"] || ''}</td></tr>
             </table>
 
             <div class="section-bar">ACADEMIC DETAILS</div>
@@ -157,20 +152,20 @@
                 <tr><td class="sh">Account No</td><td>${d["Bank Account Number"] || ''}</td><td class="sh">IFSC Code</td><td>${d["IFSC"] || ''}</td></tr>
             </table>
 
-            <div class="declaration-box">
+            <div class="decl-box">
                 <b>DECLARATION:</b><br>
                 1. I solemnly undertake to accept and abide by the rules of the school.<br>
                 2. I hereby affirm that the entries made by me above are true to the best of my knowledge.<br>
                 3. If at any time, the entries are found incorrect, the admission may be cancelled.
             </div>
 
-            <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
+            <div style="margin-top:35px; display:flex; justify-content:space-between; font-size:12px; text-align:center;">
                 <div style="width:130px;">
-                    <img src="${fixDriveLink(d["Signature"])}" style="width:100%; height:40px; object-fit:contain;" onerror="this.style.display='none'">
+                    ${d["Signature"] ? `<img src="${d["Signature"]}" style="width:100%; height:45px; object-fit:contain;">` : '<br><br>'}
                     <br>_________________<br>Student Signature
                 </div>
-                <div><br><br>_________________<br>Guardian Signature</div>
-                <div><br><br>_________________<br>Principal Signature</div>
+                <div><br><br>_________________<br>Guardian's Signature</div>
+                <div><br><br>_________________<br>Principal's Signature</div>
             </div>
         `;
         if(appNo !== "N/A") new QRCode(document.getElementById("qrPrint"), { text: appNo, width: 60, height: 60 });
