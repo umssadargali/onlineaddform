@@ -9,12 +9,12 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; text-align: center; }
         .box { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--p); }
         .logo-text { color: var(--p); font-size: 24px; font-weight: bold; margin: 0; }
-        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; text-transform: uppercase; }
+        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; text-transform: uppercase; letter-spacing: 1px; }
         .input-group { text-align: left; margin-bottom: 15px; }
         label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; }
-        .btn-save { background: #d4af37; margin-top: 10px; display: none; }
+        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--p); outline: none; box-shadow: 0 0 5px rgba(26,93,26,0.2); }
+        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; box-shadow: 0 4px 10px rgba(26,93,26,0.3); }
         #msg { margin-top: 15px; font-size: 14px; color: var(--p); font-weight: 600; display: none; }
     </style>
 </head>
@@ -33,35 +33,25 @@
         <label>Aadhaar Number</label>
         <input type="number" id="sAadhar" placeholder="12 digit number">
     </div>
+    
+    <div style="margin:15px 0; color:#aaa; font-size:12px; font-weight:bold;">— SECURITY VERIFICATION —</div>
+    
     <div class="input-group">
         <label>Date of Birth</label>
         <input type="date" id="sDob">
     </div>
 
     <button class="btn" id="searchBtn" onclick="search()">FIND & DOWNLOAD PDF</button>
-    <button class="btn btn-save" id="saveBtn" onclick="downloadLastPDF()">SAVE PDF MANUALLY</button>
-    
-    <p id="msg">Processing Record... Please wait.</p>
+    <p id="msg">Searching Database... Please wait.</p>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
-    let lastFetchedData = null;
 
     function formatDate(val) {
         if (!val) return "N/A";
         if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];
         return val;
-    }
-
-    // Google Drive Image Link Converter
-    function getDirectUrl(url) {
-        if (!url || typeof url !== 'string') return "";
-        if (url.includes("drive.google.com")) {
-            const id = url.match(/[-\w]{25,}/);
-            return id ? `https://drive.google.com/uc?export=view&id=${id}` : url;
-        }
-        return url;
     }
 
     async function search() {
@@ -71,7 +61,7 @@
         const msg = document.getElementById('msg');
         const btn = document.getElementById('searchBtn');
 
-        if(!name || !aadhar) return alert("Please fill Name and Aadhaar");
+        if(!name || !aadhar) return alert("Please fill Name and Aadhaar Number");
 
         msg.style.display = "block";
         btn.disabled = true;
@@ -84,128 +74,119 @@
             btn.disabled = false;
 
             if(data === "Not Found") {
-                alert("No record found.");
+                alert("No record found. Please check your details.");
             } else {
-                lastFetchedData = data;
-                document.getElementById('saveBtn').style.display = "block";
-                await printAMUGrid(data);
+                // Yahan wahi function call ho raha hai jo aapke base code mein tha
+                printAMUGrid(data);
             }
         } catch(e) {
             msg.style.display = "none";
             btn.disabled = false;
-            alert("Connection Error!");
+            alert("Connection Error! Check your internet.");
         }
     }
 
-    function downloadLastPDF() {
-        if(lastFetchedData) printAMUGrid(lastFetchedData);
-    }
-
-    async function printAMUGrid(data) {
+    function printAMUGrid(data) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         
-        doc.setLineWidth(0.4);
+        doc.setLineWidth(0.5);
         doc.rect(5, 5, 200, 287);
         
-        // Header Section
-        doc.setFontSize(7); doc.setFont("helvetica", "bold");
-        doc.text("Application No: " + (data["Application No"] || "N/A"), 10, 10);
-        doc.text("Roll No: " + (data["Serial No. of Admission"] || ""), 10, 13);
-        doc.text("Date: " + formatDate(data["Timestamp"]), 10, 16);
+        // Header
+        doc.setFontSize(8); doc.setFont("helvetica", "bold");
+        doc.text("Application Number: " + (data["Application No"] || "N/A"), 10, 12);
+        doc.text("Serial No: " + (data["Serial No. of Admission"] || ""), 10, 16);
+        doc.text("Date: " + formatDate(data["Timestamp"] || data["Date"]), 10, 20);
 
         doc.setFontSize(14); doc.setTextColor(183, 28, 28);
-        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 14, {align:'center'});
+        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
         doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("Session : 2026-27", 105, 19, {align:'center'});
-        doc.text("IQRA PUBLIC SCHOOL", 105, 24, {align:'center'});
+        doc.text("Session : 2026-27", 105, 20, {align:'center'});
+        doc.text("IQRA PUBLIC SCHOOL", 105, 25, {align:'center'});
         doc.setFontSize(8); doc.setFont("helvetica", "normal");
-        doc.text("Application Form for Admission", 105, 28, {align:'center'});
+        doc.text("Application Form for Admission", 105, 30, {align:'center'});
 
-        // Image Loading Function (Improved)
-        const addImg = (url, x, y, w, h) => {
-            return new Promise((resolve) => {
-                if(!url) return resolve();
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.onload = function() {
-                    try { doc.addImage(this, 'JPEG', x, y, w, h); } catch(e){}
-                    resolve();
-                };
-                img.onerror = () => resolve();
-                img.src = getDirectUrl(url);
-            });
-        };
-
-        // Photo
+        // Photo Frame - Ismein hum aapka purana logic use kar rahe hain
         doc.rect(165, 10, 30, 38); 
-        await addImg(data["Photo of Student"] || data["photoData"], 165, 10, 30, 38);
+        const photo = data["Photo of Student"] || data["photoData"];
+        if (photo) {
+            try { doc.addImage(photo, 'JPEG', 165, 10, 30, 38); } catch(e){ console.log("Photo error"); }
+        }
 
-        // QR Code
+        // QR Code logic (Exactly like your base)
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
-        const qrCanvas = await new Promise(r => setTimeout(() => r(qrDiv.querySelector('canvas')), 700));
-        if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 32, 20, 20);
+        
+        setTimeout(() => {
+            const qrCanvas = qrDiv.querySelector('canvas');
+            if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 33, 22, 22);
 
-        // Grid Sections
-        let y = 58; 
-        const sections = [
-            { title: "PERSONAL DETAILS", fields: [
-                ["Student Name", data["Name of Student"]], ["Father's Name", data["Father's Name"]],
-                ["Mother's Name", data["Mother's Name"]], ["Date of Birth", formatDate(data["Date of Birth"])],
-                ["Caste", data["Caste"]], ["Category", data["Category"]],
-                ["Aadhaar Number", data["Aadhaar Number"]]
-            ]},
-            { title: "CONTACT & ADDRESS", fields: [
-                ["Mobile Number", data["Mobile Number"]], ["Residence", data["Permanent Residence"]]
-            ]},
-            { title: "ACADEMIC DETAILS", fields: [
-                ["Previous School", data["Name & Place of Previous School"]], ["TC No", data["T.C No."]],
-                ["Admitted Class", data["Class in which admitted"]], ["Reading Class", data["Class in which reading"]]
-            ]},
-            { title: "BANK DETAILS", fields: [
-                ["Account Holder", data["Account Holder's Name"]], ["Bank Name", data["Bank Name"]],
-                ["Account No", data["Bank Account Number"]], ["IFSC Code", data["IFSC"]]
-            ]}
-        ];
+            let y = 60; 
+            const sections = [
+                { title: "PERSONAL DETAILS", fields: [
+                    ["Student Name", data["Name of Student"]], ["Father's Name", data["Father's Name"]],
+                    ["Mother's Name", data["Mother's Name"]], ["Date of Birth", formatDate(data["Date of Birth"])],
+                    ["Caste", data["Caste"]], ["Category", data["Category"]],
+                    ["Aadhaar Number", data["Aadhaar Number"]]
+                ]},
+                { title: "CONTACT & ADDRESS", fields: [
+                    ["Mobile Number", data["Mobile Number"]], ["Residence", data["Permanent Residence"]]
+                ]},
+                { title: "ACADEMIC DETAILS", fields: [
+                    ["Previous School", data["Name & Place of Previous School"]], ["TC No", data["T.C No."]],
+                    ["Reading Class", data["Class in which reading"]], ["Admitted Class", data["Class in which admitted"]]
+                ]},
+                { title: "BANK DETAILS", fields: [
+                    ["Account Holder", data["Account Holder's Name"]], ["Bank Name", data["Bank Name"]],
+                    ["Account No", data["Bank Account Number"]], ["IFSC Code", data["IFSC"]]
+                ]}
+            ];
 
-        sections.forEach(sec => {
-            doc.setFillColor(235, 235, 235); doc.rect(10, y, 190, 5, 'F');
-            doc.setFontSize(8); doc.setFont("helvetica", "bold");
-            doc.text(sec.title, 12, y + 3.8);
-            y += 5;
-            for(let i=0; i<sec.fields.length; i+=2) {
-                let f1 = sec.fields[i], f2 = sec.fields[i+1];
-                doc.setDrawColor(180); doc.rect(10, y, 95, 7); 
-                if(f2) doc.rect(105, y, 95, 7);
-                doc.setFont("helvetica", "bold"); doc.text(f1[0] + ":", 12, y + 4.5);
-                doc.setFont("helvetica", "normal"); doc.text(String(f1[1] || "N/A"), 40, y + 4.5);
-                if(f2) {
-                    doc.setFont("helvetica", "bold"); doc.text(f2[0] + ":", 107, y + 4.5);
-                    doc.setFont("helvetica", "normal"); doc.text(String(f2[1] || "N/A"), 135, y + 4.5);
+            sections.forEach(sec => {
+                doc.setFillColor(235, 235, 235); doc.rect(10, y, 190, 6, 'F');
+                doc.setFontSize(9); doc.setFont("helvetica", "bold");
+                doc.text(sec.title, 12, y + 4.5);
+                y += 6;
+                doc.setFontSize(8);
+                for(let i=0; i<sec.fields.length; i+=2) {
+                    let f1 = sec.fields[i], f2 = sec.fields[i+1];
+                    doc.setDrawColor(180); doc.rect(10, y, 95, 7); 
+                    if(f2) doc.rect(105, y, 95, 7);
+                    doc.setFont("helvetica", "bold"); doc.text(f1[0] + ":", 12, y + 4.5);
+                    doc.setFont("helvetica", "normal"); doc.text(String(f1[1] || "N/A"), 40, y + 4.5);
+                    if(f2) {
+                        doc.setFont("helvetica", "bold"); doc.text(f2[0] + ":", 107, y + 4.5);
+                        doc.setFont("helvetica", "normal"); doc.text(String(f2[1] || "N/A"), 135, y + 4.5);
+                    }
+                    y += 7;
                 }
-                y += 7;
+                y += 2;
+            });
+
+            // Declaration (As requested)
+            y = 245;
+            doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
+            doc.setFont("helvetica", "normal");
+            doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 4);
+            doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 7);
+            doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 10);
+
+            // Signatures (Exactly like your working base)
+            y = 280;
+            const sign = data["Signature"] || data["sigData"];
+            if (sign) {
+                try { doc.addImage(sign, 'JPEG', 12, y - 12, 28, 10); } catch(e){}
             }
-            y += 3;
-        });
+            
+            doc.setFontSize(8); doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4);
+            doc.line(85, y, 125, y); doc.text("Guardian's Signature", 90, y + 4);
+            doc.line(160, y, 200, y); doc.text("Principal's Signature", 165, y + 4);
 
-        // Declaration
-        y = 245;
-        doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-        doc.setFont("helvetica", "normal");
-        doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 4);
-        doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 7);
-        doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 10);
-
-        // Signatures
-        y = 280;
-        await addImg(data["Signature"] || data["sigData"], 12, y - 10, 25, 8);
-        doc.setFontSize(8); doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4);
-        doc.line(85, y, 125, y); doc.text("Guardian's Signature", 90, y + 4);
-        doc.line(160, y, 200, y); doc.text("Principal's Signature", 165, y + 4);
-
-        doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
+            doc.save("Admission_" + (data["Name of Student"] || "Form") + ".pdf");
+        }, 1000); // 1 second wait for images/QR
     }
 </script>
+
 </body>
 </html>
