@@ -1,195 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS - Search Admission</title>
+    <title>IPS - Search & Preview</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; text-align: center; }
-        .box { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid var(--p); }
-        .logo-text { color: var(--p); font-size: 24px; font-weight: bold; margin: 0; }
-        .highlight { background: #d4af37; color: white; padding: 10px; font-weight: bold; margin: 20px 0; border-radius: 6px; display: block; text-transform: uppercase; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn { background: var(--p); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; }
-        #msg { margin-top: 15px; font-size: 14px; color: var(--p); font-weight: 600; display: none; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        
+        /* Search Box Style */
+        .search-container { max-width: 400px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-top: 5px solid var(--p); }
+        .search-container input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-search { background: var(--p); color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        
+        /* Preview Style */
+        #preview-area { display: none; margin-top: 20px; }
+        #admit-card-ui { 
+            width: 210mm; min-height: 297mm; padding: 10mm; margin: auto;
+            background: white; border: 1px solid #333; box-sizing: border-box;
+            position: relative; text-align: left;
+        }
+        .header { text-align: center; color: #b71c1c; margin-bottom: 10px; }
+        .grid-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .grid-table td { border: 1px solid #ccc; padding: 6px; }
+        .section-head { background: #eee; font-weight: bold; padding: 5px; border: 1px solid #ccc; font-size: 13px; margin-top: 10px; }
+        
+        .photo-box { position: absolute; top: 15mm; right: 15mm; width: 35mm; height: 45mm; border: 1px solid #000; overflow: hidden; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .btn-save-fixed { 
+            position: fixed; bottom: 20px; right: 20px; background: #2d5a27; 
+            color: white; border: none; padding: 15px 25px; border-radius: 50px; 
+            font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer;
+            z-index: 100; display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Hide search during print */
+        @media print { .search-container, .btn-save-fixed { display: none; } }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <div class="logo-text">IQRA PUBLIC SCHOOL</div>
-    <p style="font-size:13px; color:#666; margin:5px 0;">Mathurapur, Barsoi, Katihar (Bihar)</p>
-    <div class="highlight">Search Admission Form</div>
+<div class="search-container" id="search-box">
+    <h3 style="margin-top:0; color:var(--p)">IPS ADMISSION SEARCH</h3>
+    <input type="text" id="sName" placeholder="Student Name">
+    <input type="number" id="sAadhar" placeholder="Aadhaar Number">
+    <button class="btn-search" onclick="searchStudent()">FIND RECORD</button>
+    <p id="status" style="display:none; font-size:12px; color:orange;">Searching...</p>
+</div>
 
-    <div class="input-group">
-        <label>Student Full Name</label>
-        <input type="text" id="sName" placeholder="As per Aadhaar">
-    </div>
-    <div class="input-group">
-        <label>Aadhaar Number</label>
-        <input type="number" id="sAadhar" placeholder="12 digit number">
-    </div>
-    <div class="input-group">
-        <label>Date of Birth</label>
-        <input type="date" id="sDob">
+<div id="preview-area">
+    <div id="admit-card-ui">
+        <div style="font-size: 10px; font-weight: bold;">
+            App No: <span id="view-app-no"></span><br>
+            Roll No: <span id="view-roll"></span><br>
+            Date: <span id="view-date"></span>
+        </div>
+
+        <div class="header">
+            <h2 style="margin:0; font-size: 18px;">ALIGARH MUSLIM UNIVERSITY</h2>
+            <div style="color:black; font-size:12px; font-weight:bold;">IQRA PUBLIC SCHOOL</div>
+            <div style="color:black; font-size:10px;">Session: 2026-27 | Admission Form</div>
+            <div id="qrcode" style="margin-top:10px; display: flex; justify-content: center;"></div>
+        </div>
+
+        <div class="photo-box"><img id="view-photo" src=""></div>
+
+        <div class="section-head">PERSONAL DETAILS</div>
+        <table class="grid-table">
+            <tr><td><b>Student Name:</b></td><td id="v-name"></td><td><b>Father's Name:</b></td><td id="v-fname"></td></tr>
+            <tr><td><b>Mother's Name:</b></td><td id="v-mname"></td><td><b>Date of Birth:</b></td><td id="v-dob"></td></tr>
+            <tr><td><b>Caste:</b></td><td id="v-caste"></td><td><b>Category:</b></td><td id="v-cat"></td></tr>
+            <tr><td><b>Aadhaar:</b></td><td colspan="3" id="v-aadhar"></td></tr>
+        </table>
+
+        <div class="section-head">CONTACT & ADDRESS</div>
+        <table class="grid-table">
+            <tr><td><b>Mobile:</b></td><td id="v-mob"></td><td><b>Residence:</b></td><td id="v-res"></td></tr>
+        </table>
+
+        <div class="section-head">ACADEMIC DETAILS</div>
+        <table class="grid-table">
+            <tr><td><b>Prev. School:</b></td><td colspan="3" id="v-pschool"></td></tr>
+            <tr><td><b>TC No:</b></td><td id="v-tc"></td><td><b>Admitted Class:</b></td><td id="v-class"></td></tr>
+        </table>
+
+        <div style="margin-top:30px; font-size:10px;">
+            <b>DECLARATION:</b><br>
+            1. I solemnly undertake to accept and abide by the rules of the school.<br>
+            2. I hereby affirm that the entries made by me are true to my knowledge.<br>
+            3. Admission may be cancelled if entries are found incorrect.
+        </div>
+
+        <div style="margin-top:50px; display:flex; justify-content: space-between; font-size:11px; border-top:1px solid #ccc; padding-top:10px;">
+            <div><img id="view-sign" style="height:30px; display:block;"><br>Student Signature</div>
+            <div style="text-align:center;"><br><br>Guardian's Signature</div>
+            <div style="text-align:right;"><br><br>Principal's Signature</div>
+        </div>
     </div>
 
-    <button class="btn" id="searchBtn" onclick="search()">FIND & DOWNLOAD PDF</button>
-    <p id="msg">Searching Database... Please wait.</p>
+    <button class="btn-save-fixed" onclick="saveAsPDF()">
+        <span>💾</span> SAVE AS PDF
+    </button>
 </div>
 
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
 
-    function formatDate(val) {
-        if (!val) return "N/A";
-        if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];
-        return val;
-    }
-
-    // Google Drive Link to Direct Image Converter
-    function getDirectUrl(url) {
-        if (!url || typeof url !== 'string') return "";
-        if (url.includes("drive.google.com")) {
-            const id = url.match(/[-\w]{25,}/);
-            return id ? `https://drive.google.com/uc?export=view&id=${id}` : url;
-        }
-        return url;
-    }
-
-    async function search() {
-        const name = document.getElementById('sName').value.trim();
-        const aadhar = document.getElementById('sAadhar').value.trim();
-        const dob = document.getElementById('sDob').value;
-        const msg = document.getElementById('msg');
-        const btn = document.getElementById('searchBtn');
-
-        if(!name || !aadhar) return alert("Please fill details");
-
-        msg.style.display = "block";
-        btn.disabled = true;
-
+    async function searchStudent() {
+        const name = document.getElementById('sName').value;
+        const aadhar = document.getElementById('sAadhar').value;
+        const status = document.getElementById('status');
+        
+        if(!name || !aadhar) return alert("Please enter Name & Aadhaar");
+        
+        status.style.display = "block";
+        
         try {
-            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}&searchDOB=${dob}`);
+            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
             const data = await res.json();
             
-            msg.style.display = "none";
-            btn.disabled = false;
-
             if(data === "Not Found") {
-                alert("No record found.");
+                alert("No record found!");
             } else {
-                generatePDF(data);
+                showPreview(data);
             }
-        } catch(e) {
-            msg.style.display = "none";
-            btn.disabled = false;
-            alert("Error connecting to database.");
-        }
+        } catch(e) { alert("Error!"); }
+        status.style.display = "none";
     }
 
-    async function generatePDF(data) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
+    function showPreview(data) {
+        document.getElementById('search-box').style.display = "none";
+        document.getElementById('preview-area').style.display = "block";
+
+        // Fill Data
+        document.getElementById('view-app-no').innerText = data["Application No"] || "N/A";
+        document.getElementById('view-roll').innerText = data["Serial No. of Admission"] || "";
+        document.getElementById('v-name').innerText = data["Name of Student"];
+        document.getElementById('v-fname').innerText = data["Father's Name"];
+        document.getElementById('v-mname').innerText = data["Mother's Name"];
+        document.getElementById('v-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
+        document.getElementById('v-aadhar').innerText = data["Aadhaar Number"];
+        document.getElementById('v-mob').innerText = data["Mobile Number"];
+        document.getElementById('v-res').innerText = data["Permanent Residence"];
+        document.getElementById('v-pschool').innerText = data["Name & Place of Previous School"];
+        document.getElementById('v-class').innerText = data["Class in which admitted"];
         
-        // Helper function to load image properly
-        const loadImg = (url) => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "Anonymous";
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = getDirectUrl(url);
-            });
-        };
-
-        // Load Photo and Signature first
-        const photoImg = await loadImg(data["Photo of Student"] || data["photoData"]);
-        const signImg = await loadImg(data["Signature"] || data["sigData"]);
-
-        // Draw Border
-        doc.setLineWidth(0.5);
-        doc.rect(5, 5, 200, 287);
-
-        // Header
-        doc.setFontSize(8); doc.setFont("helvetica", "bold");
-        doc.text("App No: " + (data["Application No"] || "N/A"), 10, 12);
-        doc.text("Serial No: " + (data["Serial No. of Admission"] || ""), 10, 16);
-        doc.text("Date: " + formatDate(data["Timestamp"]), 10, 20);
-
-        doc.setFontSize(14); doc.setTextColor(183, 28, 28);
-        doc.text("ALIGARH MUSLIM UNIVERSITY", 105, 15, {align:'center'});
-        doc.setFontSize(10); doc.setTextColor(0);
-        doc.text("Session : 2026-27", 105, 21, {align:'center'});
-        doc.text("IQRA PUBLIC SCHOOL", 105, 26, {align:'center'});
-
-        // Add Photo
-        doc.rect(165, 10, 30, 38);
-        if (photoImg) doc.addImage(photoImg, 'JPEG', 165, 10, 30, 38);
+        // Photos
+        if(data["Photo of Student"]) document.getElementById('view-photo').src = data["Photo of Student"];
+        if(data["Signature"]) document.getElementById('view-sign').src = data["Signature"];
 
         // QR Code
-        const qrDiv = document.createElement('div');
-        new QRCode(qrDiv, { text: String(data["Application No"] || "IPS"), width: 100, height: 100 });
-        await new Promise(r => setTimeout(r, 500));
-        const qrCanvas = qrDiv.querySelector('canvas');
-        if(qrCanvas) doc.addImage(qrCanvas.toDataURL("image/png"), 'PNG', 92, 32, 22, 22);
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 70, height: 70 });
+    }
 
-        // Grid Design
-        let y = 62;
-        const sections = [
-            { title: "PERSONAL DETAILS", fields: [
-                ["Student Name", data["Name of Student"]], ["Father's Name", data["Father's Name"]],
-                ["Mother's Name", data["Mother's Name"]], ["Date of Birth", formatDate(data["Date of Birth"])],
-                ["Caste", data["Caste"]], ["Category", data["Category"]], ["Aadhaar", data["Aadhaar Number"]]
-            ]},
-            { title: "CONTACT & ADDRESS", fields: [
-                ["Mobile", data["Mobile Number"]], ["Residence", data["Permanent Residence"]]
-            ]},
-            { title: "ACADEMIC & BANK", fields: [
-                ["Previous School", data["Name & Place of Previous School"]], ["Class", data["Class in which admitted"]],
-                ["Bank A/c", data["Bank Account Number"]], ["IFSC", data["IFSC"]]
-            ]}
-        ];
-
-        sections.forEach(sec => {
-            doc.setFillColor(235, 235, 235); doc.rect(10, y, 190, 6, 'F');
-            doc.setFontSize(9); doc.setFont("helvetica", "bold");
-            doc.text(sec.title, 12, y + 4.5);
-            y += 6;
-            doc.setFontSize(8);
-            for(let i=0; i<sec.fields.length; i+=2) {
-                let f1 = sec.fields[i], f2 = sec.fields[i+1];
-                doc.setDrawColor(180); doc.rect(10, y, 95, 7); 
-                if(f2) doc.rect(105, y, 95, 7);
-                doc.setFont("helvetica", "bold"); doc.text(f1[0] + ":", 12, y + 4.5);
-                doc.setFont("helvetica", "normal"); doc.text(String(f1[1] || "N/A"), 38, y + 4.5);
-                if(f2) {
-                    doc.setFont("helvetica", "bold"); doc.text(f2[0] + ":", 107, y + 4.5);
-                    doc.setFont("helvetica", "normal"); doc.text(String(f2[1] || "N/A"), 135, y + 4.5);
-                }
-                y += 7;
-            }
-            y += 2;
-        });
-
-        // Declaration
-        y = 245;
-        doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.text("DECLARATION:", 10, y);
-        doc.setFont("helvetica", "normal");
-        doc.text("1. I solemnly undertake to accept and abide by the rules of the school.", 10, y + 4);
-        doc.text("2. I hereby affirm that the entries made by me above are true to the best of my knowledge.", 10, y + 7);
-        doc.text("3. If at any time, the entries are found incorrect, the admission may be cancelled.", 10, y + 10);
-
-        // Signature
-        y = 280;
-        if (signImg) doc.addImage(signImg, 'JPEG', 12, y - 11, 28, 10);
-        doc.line(10, y, 50, y); doc.text("Student Signature", 15, y + 4);
-        doc.line(160, y, 200, y); doc.text("Principal Signature", 165, y + 4);
-
-        doc.save("Admission_" + data["Name of Student"] + ".pdf");
+    function saveAsPDF() {
+        // This opens the native "Save as PDF" dialog
+        window.print();
     }
 </script>
 </body>
