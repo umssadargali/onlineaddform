@@ -1,124 +1,151 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IPS Data Manager</title>
+    <title>IPS Student Search</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #1a5d1a; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        body { font-family: Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         
-        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* Dashboard Styles */
+        .dash-container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn-main { background: var(--p); color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         
-        .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--p); padding-bottom: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--p); color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
         
-        /* Search Box Design */
-        .search-wrapper { position: relative; width: 100%; max-width: 400px; }
-        #searchBox { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 25px; outline: none; transition: 0.3s; }
-        #searchBox:focus { border-color: var(--p); box-shadow: 0 0 8px rgba(26,93,26,0.2); }
-
-        /* Table Design */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th { background: var(--p); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        tr:hover { background: #f1f8f1; }
-
-        .btn-view { background: #b71c1c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        /* Form Style (Hidden by default) */
+        #print-form { display: none; width: 210mm; min-height: 297mm; padding: 12mm; background: white; border: 1px solid #000; margin: 20px auto; position: relative; }
+        .header { text-align: center; }
+        .photo-box { position: absolute; top: 12mm; right: 12mm; width: 35mm; height: 45mm; border: 1px solid #000; }
+        .section-head { background: #e0e0e0; font-weight: bold; padding: 5px; border: 1px solid #000; margin-top: 15px; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table td { border: 1px solid #000; padding: 6px; width: 25%; font-size: 13px; }
         
-        #loading { text-align: center; color: var(--p); font-weight: bold; padding: 20px; }
+        @media print {
+            body * { display: none !important; }
+            #print-form, #print-form * { display: block !important; }
+            #print-form { border: none; margin: 0; padding: 0; }
+            @page { size: portrait; margin: 0; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-box">
-        <h2 style="color:var(--p); margin:0;">IPS Student Records</h2>
-        <div class="search-wrapper">
-            <input type="text" id="searchBox" onkeyup="filterTable()" placeholder="🔍 Student ka naam likhein...">
-        </div>
+<div id="admin-view" class="dash-container">
+    <h2 style="color:var(--p)">IPS Student Records</h2>
+    <div class="search-row">
+        <input type="text" id="stuName" placeholder="Student Name likhein...">
+        <input type="number" id="stuAadhar" placeholder="Aadhar No (Zaroori)">
+        <button class="btn-main" onclick="fetchOne()">SEARCH</button>
     </div>
 
-    <div id="loading">Data load ho raha hai, intezar karein...</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Father's Name</th>
+                <th>Class</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="resultBody">
+            <tr><td colspan="4" style="text-align:center; color:gray;">Pehle search karein...</td></tr>
+        </tbody>
+    </table>
+</div>
 
-    <div class="table-container">
-        <table id="studentTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>App No</th>
-                    <th>Student Name</th>
-                    <th>Father's Name</th>
-                    <th>Class</th>
-                    <th>Aadhaar</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                </tbody>
-        </table>
+<div id="print-form">
+    <div style="font-size: 10px;">App No: <span id="r-app"></span> | Roll: <span id="r-roll"></span></div>
+    <div class="header">
+        <h2 style="color:#b71c1c; margin:0;">ALIGARH MUSLIM UNIVERSITY</h2>
+        <p style="margin:2px;">IQRA PUBLIC SCHOOL | Session 2026-27</p>
+        <div id="qrcode" style="display:flex; justify-content:center; margin:5px;"></div>
     </div>
+    <div class="photo-box"><img id="r-photo" src="" style="width:100%; height:100%;"></div>
+    
+    <div class="section-head">PERSONAL DETAILS</div>
+    <table class="data-table">
+        <tr><td><b>Name:</b></td><td id="r-name"></td><td><b>Father:</b></td><td id="r-fname"></td></tr>
+        <tr><td><b>Mother:</b></td><td id="r-mname"></td><td><b>DOB:</b></td><td id="r-dob"></td></tr>
+    </table>
+
+    <div class="section-head">ACADEMIC DETAILS</div>
+    <table class="data-table">
+        <tr><td><b>Class:</b></td><td id="r-class"></td><td><b>Mobile:</b></td><td id="r-mob"></td></tr>
+        <tr><td><b>Aadhar:</b></td><td colspan="3" id="r-aadhar"></td></tr>
+    </table>
+
+    <div style="margin-top:50px; display:flex; justify-content:space-between;">
+        <div style="border-top:1px solid #000; width:50mm; text-align:center;"><img id="r-sign" style="height:30px;"><br>Signature</div>
+        <div style="border-top:1px solid #000; width:50mm; text-align:center;"><br>Principal</div>
+    </div>
+    
+    <center style="margin-top:30px;">
+        <button class="btn-main" onclick="window.print()">PRINT FORM</button>
+        <button class="btn-main" style="background:gray;" onclick="location.reload()">BACK</button>
+    </center>
 </div>
 
 <script>
-    // Aapka wahi purana URL
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxbbDQxqzxcXMozsYgwf04wNmLwMoZMdNqaqkzOo7wcQB-ZGmHXv-i7-dg9I-hzi_uj/exec';
-    let allData = [];
 
-    // Data fetch karne ka function
-    async function loadData() {
+    function getDriveImg(url) {
+        if (!url) return "";
+        const id = url.match(/[-\w]{25,}/);
+        return id ? `https://drive.google.com/uc?export=view&id=${id[0]}` : url;
+    }
+
+    async function fetchOne() {
+        const name = document.getElementById('stuName').value;
+        const aadhar = document.getElementById('stuAadhar').value;
+        if(!name || !aadhar) return alert("Dono details bhariye");
+
+        const tbody = document.getElementById('resultBody');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Searching...</td></tr>';
+
         try {
-            // Hum "action=readAll" bhej rahe hain (Agar script support kare) 
-            // Ya fir bina parameters ke fetch kar rahe hain
-            const res = await fetch(scriptURL);
+            const res = await fetch(`${scriptURL}?searchName=${encodeURIComponent(name)}&searchAadhar=${aadhar}`);
             const data = await res.json();
-            
-            allData = Array.isArray(data) ? data : [data]; 
-            renderTable(allData);
-            
-            document.getElementById('loading').style.display = "none";
-            document.getElementById('studentTable').style.display = "table";
-        } catch (e) {
-            document.getElementById('loading').innerText = "Error: Data load nahi ho saka!";
-        }
-    }
 
-    function renderTable(dataList) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = "";
-        
-        dataList.forEach((item, index) => {
-            let row = `<tr>
-                <td>${item["Application No"] || 'N/A'}</td>
-                <td><b>${item["Name of Student"]}</b></td>
-                <td>${item["Father's Name"]}</td>
-                <td>${item["Class in which admitted"]}</td>
-                <td>${item["Aadhaar Number"]}</td>
-                <td><button class="btn-view" onclick="alert('Detais:\nName: ${item["Name of Student"]}\nMob: ${item["Mobile Number"]}')">VIEW</button></td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-    }
-
-    // Search filter function
-    function filterTable() {
-        let input = document.getElementById("searchBox").value.toUpperCase();
-        let table = document.getElementById("studentTable");
-        let tr = table.getElementsByTagName("tr");
-
-        for (let i = 1; i < tr.length; i++) {
-            let td = tr[i].getElementsByTagName("td")[1]; // Student Name column
-            if (td) {
-                let txtValue = td.textContent || td.innerText;
-                if (txtValue.toUpperCase().indexOf(input) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
+            if(data === "Not Found") {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Nahi mila!</td></tr>';
+                return;
             }
-        }
+
+            // Table mein row dikhana
+            tbody.innerHTML = `<tr>
+                <td><b>${data["Name of Student"]}</b></td>
+                <td>${data["Father's Name"]}</td>
+                <td>${data["Class in which admitted"]}</td>
+                <td><button class="btn-main" style="padding:5px 10px;" onclick='openForm(${JSON.stringify(data)})'>VIEW</button></td>
+            </tr>`;
+        } catch(e) { alert("Error!"); }
     }
 
-    // Page load hote hi data mangwao
-    window.onload = loadData;
-</script>
+    function openForm(data) {
+        document.getElementById('admin-view').style.display = 'none';
+        document.getElementById('print-form').style.display = 'block';
 
+        // Form fields bharna
+        document.getElementById('r-app').innerText = data["Application No"] || "N/A";
+        document.getElementById('r-name').innerText = data["Name of Student"];
+        document.getElementById('r-fname').innerText = data["Father's Name"];
+        document.getElementById('r-mname').innerText = data["Mother's Name"];
+        document.getElementById('r-dob').innerText = data["Date of Birth"] ? data["Date of Birth"].split('T')[0] : "";
+        document.getElementById('r-class').innerText = data["Class in which admitted"];
+        document.getElementById('r-mob').innerText = data["Mobile Number"];
+        document.getElementById('r-aadhar').innerText = data["Aadhaar Number"];
+        
+        document.getElementById('r-photo').src = getDriveImg(data["Photo of Student"]);
+        document.getElementById('r-sign').src = getDriveImg(data["Signature"]);
+
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: String(data["Application No"]), width: 60, height: 60 });
+    }
+</script>
 </body>
 </html>
