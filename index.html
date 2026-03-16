@@ -96,35 +96,33 @@
             const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
             let count = 1;
             div.innerHTML = ""; 
+            
             headers.forEach(h => {
-                if(h && !skip.includes(h.trim())) {
-                    const isDate = h.includes('Date') && !h.includes('No');
-                    div.innerHTML += `<div class="field"><label>${count}. ${h.trim()}</label><input type="${isDate?'date':'text'}" name="${h.trim()}"></div>`;
+                let hName = h.trim();
+                if(hName && !skip.includes(hName)) {
+                    
+                    // --- GENDER LOGIC ADDED HERE ---
+                    if(hName.toLowerCase() === "gender") {
+                        div.innerHTML += `<div class="field">
+                            <label>${count}. ${hName}</label>
+                            <select name="${hName}" style="padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>`;
+                    } 
+                    // --- REST IS SAME AS OLD CODE ---
+                    else {
+                        const isDate = hName.includes('Date') && !hName.includes('No');
+                        div.innerHTML += `<div class="field"><label>${count}. ${hName}</label><input type="${isDate?'date':'text'}" name="${hName}"></div>`;
+                    }
                     count++;
                 }
             });
-
-            // --- YAHAN SE NAYA JUGAD SHURU ---
-            // Hum us input ko dhoondhenge jiska naam 'Gender' hai
-            let genderInput = document.getElementsByName("Gender")[0]; 
-            if(genderInput) {
-                // Ek naya Dropdown (Select) banayenge
-                let select = document.createElement("select");
-                select.name = "Gender";
-                select.style.cssText = "padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;";
-                select.innerHTML = `
-                    <option value="">-- Select Gender --</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                `;
-                // Purane text box ko naye dropdown se badal denge
-                genderInput.parentNode.replaceChild(select, genderInput);
-            }
-            // --- JUGAD KHATAM ---
-
         } catch (e) { console.error("Error loading headers:", e); }
     };
-
+    
     function openPre() { renderPrint(); document.getElementById('modal').style.display = 'block'; }
 
     function renderPrint(ex = {}) {
