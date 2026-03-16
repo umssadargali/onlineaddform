@@ -110,7 +110,7 @@
         
         data.forEach((s, index) => {
             const appNo = s["Application No"] || s["Application Number"] || "N/A";
-            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td></tr>`;
+            tbody.innerHTML += `<tr><td><b>${appNo}</b></td><td><b>${s["Serial No. of Admission"]}</b></td><td>${s["Name of Student"] || 'N/A'}</td><td>${s["Father's Name"] || 'N/A'}</td><td>${s["Class in which admitted"] || 'N/A'}</td><td><button class="btn-view" onclick="viewStudent(${index})">VIEW</button></td></tr>`;
         });
     }
 
