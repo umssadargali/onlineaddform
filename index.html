@@ -85,49 +85,56 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec';
     let imgs = { p: "", s: "" };
 
-    window.onload = async () => {
-    try {
-        const res = await fetch(scriptURL);
-        let headers = await res.json();
-        if (Array.isArray(headers) && headers.length > 0 && typeof headers[0] === 'object') {
-            headers = Object.keys(headers[0]);
-        }
-        const div = document.getElementById('dynamicFields');
-        const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
-        let count = 1;
-        div.innerHTML = ""; 
-        
-        headers.forEach(h => {
-            let headerName = h.trim();
-            if(headerName && !skip.includes(headerName)) {
-                
-                // 1. Gender ke liye Dropdown Logic
-                if(headerName.toLowerCase() === "gender") {
-                    div.innerHTML += `
-                        <div class="field">
-                            <label>${count}. ${headerName}</label>
-                            <select name="${headerName}" style="padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>`;
-                } 
-                // 2. Date fields ke liye logic
-                else if(headerName.includes('Date') && !headerName.includes('No')) {
-                    div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="date" name="${headerName}"></div>`;
-                }
-                // 3. Baaki sab ke liye normal text input
-                else {
-                    div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="text" name="${headerName}"></div>`;
-                }
-                count++;
+        window.onload = async () => {
+        try {
+            const res = await fetch(scriptURL);
+            let headers = await res.json();
+            if (Array.isArray(headers) && headers.length > 0 && typeof headers[0] === 'object') {
+                headers = Object.keys(headers[0]);
             }
-        });
-    } catch (e) { console.error("Error loading headers:", e); }
-};
+            const div = document.getElementById('dynamicFields');
+            const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission", "photoData", "sigData"];
+            let count = 1;
+            div.innerHTML = ""; 
 
+            headers.forEach(h => {
+                let headerName = h.trim();
+                // Check if header is valid and not in skip list
+                if(headerName && !skip.includes(headerName)) {
+                    
+                    // 1. GENDER Dropdown Check
+                    if(headerName.toLowerCase() === "gender") {
+                        div.innerHTML += `
+                            <div class="field">
+                                <label>${count}. ${headerName}</label>
+                                <select name="${headerName}" required style="padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+                                    <option value="">-- Select Gender --</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>`;
+                    } 
+                    // 2. DATE Input Check
+                    else if(headerName.includes('Date') && !headerName.includes('No')) {
+                        div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="date" name="${headerName}"></div>`;
+                    }
+                    // 3. Normal TEXT Input
+                    else {
+                        div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="text" name="${headerName}"></div>`;
+                    }
+                    count++;
+                }
+            });
+            
+            // Reset imgs object to make sure it's fresh
+            imgs = { p: "", s: "" };
+            
+        } catch (e) { 
+            console.error("Error loading headers:", e); 
+            Swal.fire("Error", "Headers load nahi ho paye. Sheet check karein.", "error");
+        }
+    };
 
     function openPre() { renderPrint(); document.getElementById('modal').style.display = 'block'; }
 
