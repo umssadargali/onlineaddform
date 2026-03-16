@@ -76,7 +76,7 @@
     <div id="printArea" class="a4-card"></div>
     <div id="mBtns" style="text-align: center; padding: 25px;">
         <button id="fBtn" onclick="sendData()" style="padding:15px 40px; background:#1a5d1a; color:white; border:none; font-weight:bold; cursor:pointer; border-radius:4px;">FINAL SUBMIT & SAVE</button>
- <button id="pBtn" style="display:none; padding:15px 40px; background:#000; color:white; border:none; cursor:pointer; font-weight:bold; border-radius:4px;" onclick="window.print()">PRINT / SAVE PDF</button>
+        <button id="pBtn" style="display:none; padding:15px 40px; background:#000; color:white; border:none; cursor:pointer; font-weight:bold; border-radius:4px;" onclick="if(window.AndroidPrint){ AndroidPrint.triggerPrint(); } else { window.print()">PRINT / SAVE PDF</button>
         <button onclick="document.getElementById('modal').style.display='none'" style="padding:15px 30px; background:#666; color:white; border:none; margin-left:10px; cursor:pointer; border-radius:4px;">BACK</button>
     </div>
 </div>
