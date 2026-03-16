@@ -78,25 +78,48 @@
     let imgs = { p: "", s: "" };
 
     window.onload = async () => {
-        try {
-            const res = await fetch(scriptURL);
-            let headers = await res.json();
-            if (Array.isArray(headers) && headers.length > 0 && typeof headers[0] === 'object') {
-                headers = Object.keys(headers[0]);
-            }
-            const div = document.getElementById('dynamicFields');
-            const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
-            let count = 1;
-            div.innerHTML = ""; 
-            headers.forEach(h => {
-                if(h && !skip.includes(h.trim())) {
-                    const isDate = h.includes('Date') && !h.includes('No');
-                    div.innerHTML += `<div class="field"><label>${count}. ${h.trim()}</label><input type="${isDate?'date':'text'}" name="${h.trim()}"></div>`;
-                    count++;
+    window.onload = async () => {
+    try {
+        const res = await fetch(scriptURL);
+        let headers = await res.json();
+        if (Array.isArray(headers) && headers.length > 0 && typeof headers[0] === 'object') {
+            headers = Object.keys(headers[0]);
+        }
+        const div = document.getElementById('dynamicFields');
+        const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
+        let count = 1;
+        div.innerHTML = ""; 
+        
+        headers.forEach(h => {
+            let headerName = h.trim();
+            if(headerName && !skip.includes(headerName)) {
+                
+                // 1. Gender ke liye Dropdown Logic
+                if(headerName.toLowerCase() === "gender") {
+                    div.innerHTML += `
+                        <div class="field">
+                            <label>${count}. ${headerName}</label>
+                            <select name="${headerName}" style="padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>`;
+                } 
+                // 2. Date fields ke liye logic
+                else if(headerName.includes('Date') && !headerName.includes('No')) {
+                    div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="date" name="${headerName}"></div>`;
                 }
-            });
-        } catch (e) { console.error("Error loading headers:", e); }
-    };
+                // 3. Baaki sab ke liye normal text input
+                else {
+                    div.innerHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="text" name="${headerName}"></div>`;
+                }
+                count++;
+            }
+        });
+    } catch (e) { console.error("Error loading headers:", e); }
+};
 
     function upImg(i, id) {
         const r = new FileReader();
