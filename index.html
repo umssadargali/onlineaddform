@@ -85,7 +85,7 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx1Ph5VQkN24QsdBcmcA-_-zVmBv2QZAZivTb04G-CGv-kC8GyXOEEqaPYTK-YJFolH/exec';
     let imgs = { p: "", s: "" };
 
-            window.onload = async () => {
+                window.onload = async () => {
         try {
             const res = await fetch(scriptURL);
             let headers = await res.json();
@@ -93,51 +93,37 @@
                 headers = Object.keys(headers[0]);
             }
             const div = document.getElementById('dynamicFields');
-            const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission", "photoData", "sigData"];
-            
+            const skip = ["Photo of Student", "Signature", "Application No", "Serial No. of Admission", "Date of Admission"];
             let count = 1;
-            let finalHTML = ""; // Saara HTML isme jama hoga
-
+            div.innerHTML = ""; 
             headers.forEach(h => {
-                let headerName = h.trim();
-                if(headerName && !skip.includes(headerName)) {
-                    
-                    // 1. GENDER Dropdown Check
-                    if(headerName.toLowerCase() === "gender") {
-                        finalHTML += `
-                            <div class="field">
-                                <label>${count}. ${headerName}</label>
-                                <select name="${headerName}" required style="padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
-                                    <option value="">-- Select Gender --</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>`;
-                    } 
-                    // 2. DATE Input Check
-                    else if(headerName.includes('Date') && !headerName.includes('No')) {
-                        finalHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="date" name="${headerName}"></div>`;
-                    }
-                    // 3. Normal TEXT Input
-                    else {
-                        finalHTML += `<div class="field"><label>${count}. ${headerName}</label><input type="text" name="${headerName}"></div>`;
-                    }
+                if(h && !skip.includes(h.trim())) {
+                    const isDate = h.includes('Date') && !h.includes('No');
+                    div.innerHTML += `<div class="field"><label>${count}. ${h.trim()}</label><input type="${isDate?'date':'text'}" name="${h.trim()}"></div>`;
                     count++;
                 }
             });
 
-            // Sabse zaroori step: Ek hi baar mein innerHTML set karein
-            div.innerHTML = finalHTML;
-            
-            // Photo variable reset
-            imgs = { p: "", s: "" };
-            
-        } catch (e) { 
-            console.error("Error:", e);
-            Swal.fire("Error", "Server se headers nahi mil paye.", "error");
-        }
-    };
+            // --- YAHAN SE NAYA JUGAD SHURU ---
+            // Hum us input ko dhoondhenge jiska naam 'Gender' hai
+            let genderInput = document.getElementsByName("Gender")[0]; 
+            if(genderInput) {
+                // Ek naya Dropdown (Select) banayenge
+                let select = document.createElement("select");
+                select.name = "Gender";
+                select.style.cssText = "padding: 9px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;";
+                select.innerHTML = `
+                    <option value="">-- Select Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                `;
+                // Purane text box ko naye dropdown se badal denge
+                genderInput.parentNode.replaceChild(select, genderInput);
+            }
+            // --- JUGAD KHATAM ---
 
+        } catch (e) { console.error("Error loading headers:", e); }
+    };
 
     function openPre() { renderPrint(); document.getElementById('modal').style.display = 'block'; }
 
