@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VGUARDINVERT - NextGen Ultimate Dashboard</title>
+    <!-- Google Fonts, Chart.js for Graphics & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #080b11 0%, #121824 100%);
+            --glass-bg: rgba(22, 30, 46, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --neon-green: #00ffaa;
+            --neon-blue: #00bfff;
+            --neon-red: #ff3366;
+            --neon-orange: #ffaa00;
+            --text-glow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Ultimate Glassmorphic Container */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            padding: 30px 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.1);
+        }
+
+        /* Premium Cyberpunk Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, #fff, var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 191, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 191, 255, 0.2);
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+        }
+        .connection-status i {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Dynamic Neon Battery Ring */
+        .battery-sec {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 25px;
+        }
+        .svg-ring {
+            transform: rotate(-90deg);
+        }
+        .ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.05);
+            stroke-width: 12;
+        }
+        .ring-progress {
+            fill: none;
+            stroke: url(#gradientGreen);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 565.4;
+            stroke-dashoffset: 214.8; /* Matches 62% */
+            filter: drop-shadow(0 0 8px var(--neon-green));
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+        .battery-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .battery-inner h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        .battery-inner p {
+            color: var(--neon-green);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        /* Intelligent Status Display Grid */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .cyber-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cyber-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        .cyber-card i {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .cyber-card .label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .cyber-card .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        /* 76V Critical Warning Animation */
+        .danger-glow {
+            color: var(--neon-red);
+            text-shadow: 0 0 8px rgba(255, 51, 102, 0.6);
+            animation: ultraBlink 1.2s infinite alternate;
+        }
+
+        /* Advanced Feature Rows */
+        .row-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .row-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .row-left i {
+            font-size: 1.2rem;
+            width: 25px;
+        }
+        .row-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .row-subtitle {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* Futuristic Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+        .switch input { display: none; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #2a3547;
+            border-radius: 34px;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+        input:checked + .slider { background-color: var(--neon-green); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Section Headings */
+        .section-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 25px 0 12px 5px;
+        }
+
+        /* Interactive Graph Section */
+        .analytics-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* Floating Futuristic Power Button */
+        .power-hub {
+            display: flex;
+            justify-content: center;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+        .glow-power-btn {
+            width: 65px;
+            height: 65px;
+            background: #1a2333;
+            border: 2px solid var(--neon-green);
+            border-radius: 50%;
+            color: var(--neon-green);
+            font-size: 1.6rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            transition: all 0.3s;
+        }
+        .glow-power-btn.off {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.2);
+        }
+
+        /* Navigation Bar */
+        .glass-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 25px;
+            padding: 10px;
+            border: 1px solid var(--glass-border);
+        }
+        .nav-link {
+            flex: 1;
+            text-align: center;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+        }
+        .nav-link i {
+            display: block;
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+
+        /* Custom Animations */
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        @keyframes ultraBlink {
+            0% { box-shadow: inset 0 0 5px rgba(255, 51, 102, 0.2); background: rgba(255, 51, 102, 0.02); }
+            100% { box-shadow: inset 0 0 15px rgba(255, 51, 102, 0.5); background: rgba(255, 51, 102, 0.08); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Tech Header -->
+        <div class="header">
+            <i class="fa-solid fa-bars-staggered" style="cursor:pointer; font-size: 1.2rem;"></i>
+            <h2>VGUARDINVERT</h2>
+            <div class="connection-status">
+                <i class="fa-solid fa-bluetooth"></i> BLE Connected
+            </div>
+        </div>
+
+        <!-- 62% Neon Curved Battery Track -->
+        <div class="battery-sec">
+            <svg class="svg-ring" width="220" height="220">
+                <defs>
+                    <linearGradient id="gradientGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00ffaa" />
+                        <stop offset="100%" stop-color="#00bfff" />
+                    </linearGradient>
+                </defs>
+                <circle class="ring-bg" cx="110" cy="110" r="90" />
+                <circle class="ring-progress" cx="110" cy="110" r="90" />
+            </svg>
+            <div class="battery-inner">
+                <h1>62%</h1>
+                <p><i class="fa-solid fa-bolt-lightning"></i> Charging</p>
+            </div>
+        </div>
+
+        <!-- Core Telemetry Info Grid -->
+        <div class="grid-layout">
+            <!-- Mains Grid with Low Voltage Alert (76V) -->
+            <div class="cyber-card danger-glow">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div class="label" style="color: #fda4af;">Mains Input</div>
+                <div class="value">76 V</div>
+                <span style="font-size: 0.65rem; display:block; margin-top:2px;">Critical Low</span>
+            </div>
+            
+            <div class="cyber-card">
+                <i class="fa-solid fa-house-laptop" style="color: var(--neon-orange);"></i>
+                <div class="label">Load Status</div>
+                <div class="value" style="color: var(--neon-orange);">On Mains</div>
+            </div>
+
+            <div class="cyber-card">
+                <i class="fa-solid fa-hourglass-half" style="color: var(--neon-blue);"></i>
+                <div class="label">Est. Full Charge</div>
+                <div class="value">2h 15m</div>
+            </div>
+
+            <div class="cyber-card">
+                <i class="fa-solid fa-heart-pulse" style="color: var(--neon-green);"></i>
+                <div class="label">Battery Health</div>
+                <div class="value" style="color: var(--neon-green);">94% (Good)</div>
+            </div>
+        </div>
+
+        <!-- Solar Power & Premium Stats Section -->
+        <div class="section-header">Green Solar Analytics</div>
+        <div class="grid-layout">
+            <div class="cyber-card" style="border-color: rgba(0,255,170,0.15)">
+                <i class="fa-solid fa-solar-panel" style="color: var(--neon-green);"></i>
+                <div class="label">Solar Generation</div>
+                <div class="value">340 Watts</div>
+            </div>
+            <div class="cyber-card">
+                <i class="fa-solid fa-leaf" style="color: var(--neon-green);"></i>
+                <div class="label">CO2 Saved Today</div>
+                <div class="value">1.2 Kg</div>
+            </div>
+        </div>
+
+        <!-- Live Diagnostics Chart -->
+        <div class="section-header">Power Performance History</div>
+        <div class="analytics-box">
+            <canvas id="loadChart" style="width:100%; height:130px;"></canvas>
+        </div>
+
+        <!-- Smart Controls & Configuration Toggles -->
+        <div class="section-header">Smart Mode Configuration</div>
+        
+        <div class="row-card">
+            <div class="row-left">
+                <i class="fa-solid fa-seedling" style="color: var(--neon-green);"></i>
+                <div>
+                    <div class="row-title">Ultra Eco Mode</div>
+                    <div class="row-subtitle">Optimizes and extends battery lifespan</div>
+                </div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="row-card">
+            <div class="row-left">
+                <i class="fa-solid fa-volume-xmark" style="color: #94a3b8;"></i>
+                <div>
+                    <div class="row-title">Buzzer Beep Mute</div>
+                    <div class="row-subtitle">Silences all inverter alarm sounds</div>
+                </div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="muteToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="row-card">
+            <div class="row-left">
+                <i class="fa-solid fa-faucet-droplet" style="color: var(--neon-blue);"></i>
+                <div>
+                    <div class="row-title">Distilled Water Level</div>
+                    <div class="row-subtitle">Status: Top-up not required</div>
+                </div>
+            </div>
+            <span style="font-weight:700; color: var(--neon-green); font-size:0.9rem;">OK</span>
+        </div>
+
+        <!-- Master Power Control Floating Button -->
+        <div class="power-hub">
+            <button class="glow-power-btn" id="masterPower" onclick="toggleMasterPower()">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+        </div>
+
+        <!-- Premium Glass Navbar -->
+        <div class="glass-nav">
+            <div class="nav-link active"><i class="fa-solid fa-chart-pie"></i>Dashboard</div>
+            <div class="nav-link"><i class="fa-solid fa-sliders"></i>Settings</div>
+            <div class="nav-link"><i class="fa-solid fa-receipt"></i>Bill Calc</div>
+        </div>
+    </div>
+
+    <!-- Live Chart Scripting & Logic -->
+    <script>
+        // Master Power Button Action
+        function toggleMasterPower() {
+            const btn = document.getElementById('masterPower');
+            btn.classList.toggle('off');
+            if(btn.classList.contains('off')){
+                alert("🔴 CRITICAL: Inverter backup turned OFF!");
+            } else {
+                alert("🟢 SUCCESS: Inverter backup operational.");
+            }
+        }
+
+        // Beautiful Live Analytics Line Chart (Using Chart.js)
+        const ctx = document.getElementById('loadChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM'],
+                datasets: [{
+                    label: 'Load Share (Watts)',
+                    data: [180, 240, 150, 420, 310, 260],
+                    borderColor: '#00bfff',
+                    backgroundColor: 'rgba(0, 191, 255, 0.05)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
