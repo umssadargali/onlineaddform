@@ -458,14 +458,19 @@
     <script>
         // Master Power Button Action
         function toggleMasterPower() {
-            const btn = document.getElementById('masterPower');
-            btn.classList.toggle('off');
-            if(btn.classList.contains('off')){
-                alert("🔴 CRITICAL: Inverter backup turned OFF!");
-            } else {
-                alert("🟢 SUCCESS: Inverter backup operational.");
-            }
-        }
+    const btn = document.getElementById('masterPower');
+    btn.classList.toggle('off');
+    
+    if(btn.classList.contains('off')){
+        // यह कमांड स्केचवेयर को बताएगा कि इनवर्टर बंद करना है
+        if(window.Android) { window.Android.sendPowerCommand("OFF"); }
+        alert("🔴 Inverter Power: OFF Command Sent");
+    } else {
+        // यह कमांड स्केचवेयर को बताएगा कि इनवर्टर चालू करना है
+        if(window.Android) { window.Android.sendPowerCommand("ON"); }
+        alert("🟢 Inverter Power: ON Command Sent");
+    }
+}
 
         // Beautiful Live Analytics Line Chart (Using Chart.js)
         const ctx = document.getElementById('loadChart').getContext('2d');
